@@ -21,7 +21,9 @@ Read this before changing anything under `scripts/traffic/`, `scripts/system/tra
 | Lifecycle (load/restart/unload) | `scripts/traffic/TrafficGame.js` |
 | Components (data only) | `scripts/components/traffic/`, registered in `index.js` |
 | Systems | `scripts/system/traffic/` |
-| Phaser view, debug overlay, HUD | `scripts/traffic/presentation/`, `scripts/traffic/ui/` |
+| Phaser view, world-space UI, debug overlay | `scripts/traffic/presentation/` |
+| Camera, minimap maths, HUD read model, control layout (pure, no Phaser/DOM) | `scripts/traffic/view/` |
+| Player HUD, input routing, debug panel (DOM) | `scripts/traffic/ui/` |
 | Data providers (local/remote/memory) | `scripts/services/data/` |
 
 ## Update order (one fixed tick)
@@ -41,6 +43,31 @@ Defined in `TrafficSession`'s constructor. Each step only reads what earlier ste
 
 Add a new system by constructing it in that list at the point where its inputs exist. Changing the order changes gameplay; add a test.
 
+## UI architecture
+
+The UI is a consumer of the simulation. Nothing below writes to the ECS; the only way the UI changes the game is a command through `GameActions` (`session.toggleSignal`, `setPaused`, restart...).
+
+```
+Simulation (ECS, stats)
+   ├─ HudReadModel          view/       one snapshot per refresh: score, capacity, gates, incidents
+   │     └─ GameHud widgets ui/hud/     ScoreDisplay, GridlockDisplay, QueueStatus, IncidentStatus,
+   │                                    StatusDisplay, GameControls, StatusBanner, Minimap
+   ├─ TrafficPresentation   presentation/  Phaser world drawing
+   │     └─ SignalControlLayer           world-space signal controls (+ signalControlSkin.js)
+   └─ DebugPanel + debug overlay         detailed dev info (D toggles debug mode)
+ViewCamera (view/) <- ViewportInput (ui/) <- pointer/keys;  Minimap and edge scroll also drive it
+```
+
+- **Coordinates.** World = level space (roads, vehicles, controls). Screen = viewport pixels (HUD, pointer). `ViewCamera` is the only place that converts (`worldToScreen`, `screenToWorld`); no zoom yet, so it is a translation. It knows world bounds and viewport size, nothing about traffic or Phaser. `TrafficPresentation.syncCamera` copies its x/y onto the engine camera and its viewport size back from the engine each frame.
+- **Viewport.** `#game-viewport` holds the Phaser canvas (`RESIZE` scale mode) and `#game-hud`. The HUD is anchored by CSS to this element; the debug panel shrinks it rather than overlapping it. Never hardcode a map size: bounds come from `level.map`.
+- **Input priority** (`ViewportInput`): HUD panels capture their own events (they sit above the canvas; only events whose target is the canvas reach the router). A press on a world control belongs to that control and never pans (activates on release over the same control). A press on empty world drags the camera. Edge scrolling only runs when the pointer is over the canvas inside the viewport and no gesture is active; arrow keys also pan. Camera input runs every frame, including while paused.
+- **Signal controls.** `computeSignalControls(level)` derives one control per (signal group, approach lane) beside the stop line, from topology only. `SignalControlLayer` reads `SignalGroupComponent.state` for appearance, hit-tests in world coordinates (`pick`), and calls `onToggle(groupId)`. While paused, a toggle stays queued until the next tick; a ring marks it (`GameActions.isSignalPending`). To restyle, change `signalControlSkin.js` or `theme.js`; interaction code does not change.
+- **HUD values.** Display authoritative stats, never recompute. `networkCapacity` is the share of lanes not blocked by incidents. Failure proximity is `peakQueueFill` (fullest input queue) and `gridlockProgress` (full-queue timer / `gridlock.fullSeconds`); both are computed in `TrafficStatsSystem`. Add new HUD numbers to stats first, then to `HudReadModel`.
+- **DOM cost.** Widgets write through `Cell` (`ui/dom.js`), which skips unchanged values. The HUD refreshes at 10 Hz; the minimap redraws only when `camera.version` or the snapshot changes.
+- **Styling.** All sizes, colours and margins live in `ui/theme.js` (exported to CSS custom properties by `applyTheme`; `game-hud.css` consumes them).
+- **Minimap.** Draws level topology (roads, junctions) plus gate pressure, incidents and the view rectangle. It does not render the world. Click or drag calls `camera.glideTo` / `centerOn`.
+- **Debug mode.** `DebugMode` is the shared switch (panel + overlay). Pause, restart, speed and `D` keys live in `GameHud`; the panel keeps `.` (step) and `1-9` (signal groups). The overlay bitmap is viewport-sized and screen-fixed, so `TrafficDebugView` translates by the camera.
+
 ## Concepts
 
 - **Signal group**: independently controllable stream of movements. Commands: `{type:"signal.set", group, green}` / `{type:"signal.toggle", group}` via `session.setSignal` / `toggleSignal`. Green is instant, red goes through yellow. No interlock by design.
@@ -51,10 +78,12 @@ Add a new system by constructing it in that list at the point where its inputs e
 
 ## Common tasks
 
-- **New level**: copy `data/levels/network-01.json` (or adapt `tools/generate-network.mjs`), add it to `data/levels/manifest.json`, run `npm test` (the validator reports exact paths). Check zones with the debug overlay (`D`, layer `conflicts`).
+- **New level**: copy a shipped level (`network-01.json` single junction; `network-02.json` 3x2 grid on a 3400x1700 map, generated by `tools/generate-grid-network.mjs`) or adapt a generator, add it to `data/levels/manifest.json`, run `npm test` (the validator reports exact paths). Check zones with the debug overlay (`D`, layer `conflicts`).
 - **New level field**: add validation in `validateLevel.js`, consume it in `compileLevel`/`instantiateLevel`/`TrafficSession`, add a test in `tests/level.test.js`. Keep it JSON, editor-friendly and Phaser-free.
 - **New component**: class in `components/traffic/`, export in its `index.js`, add the entity type to `scripts/data/TrafficDefaults.js`.
-- **New HUD/debug element**: read from stats or components only. Add debug layers to `DEBUG_LAYERS` in `TrafficDebugView.js`.
+- **New HUD element**: add a widget in `ui/hud/`, construct it in `GameHud.bind`, feed it from `HudReadModel` (which reads stats/components). Take styling from `theme.js`.
+- **New debug layer**: add it to `DEBUG_LAYERS` in `TrafficDebugView.js`.
+- **New world-space UI**: lives in the Phaser world layer (so it moves with the camera), placed in world coordinates, hit-tested through the `pick/setHover/activate` interface that `ViewportInput` calls. Do not position it from screen coordinates.
 - **Tuning**: demand curves in the level JSON; incident duration, gridlock timer and scoring in `data/game-config.json` (levels can override). Re-run the strategy test in `tests/simulation.test.js` after tuning: bad strategies must still collapse well before a sensible one.
 
 ## Pitfalls
@@ -67,8 +96,12 @@ Add a new system by constructing it in that list at the point where its inputs e
 
 ## Testing
 
+UI logic that matters is kept pure so it is tested headless: `tests/camera.test.js` (camera, edge scroll, minimap transform), `tests/hud.test.js` (signal control layout, read model). The Phaser/DOM layer (`ViewportInput`, widgets, `SignalControlLayer`) has no automated test; check it in a browser.
+
 `npm test` (node's test runner, no Phaser). Helpers in `tests/helpers/fixtures.js`: `quietSession()` (no demand), `car(session, "n", "straight")`, `setGroups(session, ...)`, `runUntil`. Prefer simulation-level tests over UI tests. `node tools/bench.mjs [demandScale] [seconds]` gives a headless performance probe.
 
 ## Not implemented yet (known gaps)
 
-Left turns (schema supports `turn: "left"`; opposing lefts collide geometrically in a small box), multi-junction levels (routes and zones already support them, untested), obstacle types beyond collision/roadworks, player-facing HUD polish, a browser-level smoke test of the Phaser presentation.
+Left turns (schema supports `turn: "left"`; opposing lefts collide geometrically in a small box), obstacle types beyond collision/roadworks, visual polish of the HUD, controls and minimap (prototype styling), camera zoom, touch input, a browser-level smoke test of the Phaser presentation (the DOM/Phaser wiring is not covered by `npm test`; only the pure `view/` modules are).
+
+`network_02` is the first multi-junction level: a lane between two junctions is both the exit of one and the approach of the next, and carries both its straight and right-turn movements, so a right-turner waiting on a red turn group can hold up traffic behind it.
