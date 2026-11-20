@@ -53,9 +53,36 @@ export class PrefabFactory {
     return entity;
   }
 
+  // Expands an entry with `amount: N` into N entities. With `spread: true`
+  // each copy is offset from the entry's Position on a ring (copy 0 stays put).
+  // Copies after the first get a `${uniqueId}_${i}` id so ids stay unique.
+  createEntities(entityData) {
+    const { amount = 1, spread = false, spreadRadius = 40 } = entityData;
+    const count = Math.max(1, Math.floor(amount));
+    if (count === 1) return [this.createEntity(entityData)];
+
+    const entities = [];
+    for (let i = 0; i < count; i++) {
+      // Deep copy so copies never share component data (e.g. Position)
+      const components = structuredClone(entityData.components || {});
+      const position = components.Position;
+      if (spread && position && i > 0) {
+        const angle = (i / (count - 1)) * Math.PI * 2;
+        position.x += Math.cos(angle) * spreadRadius * Math.ceil(i / 8);
+        position.y += Math.sin(angle) * spreadRadius * Math.ceil(i / 8);
+      }
+      const uniqueId =
+        entityData.uniqueId && i > 0
+          ? `${entityData.uniqueId}_${i}`
+          : entityData.uniqueId;
+      entities.push(this.createEntity({ ...entityData, uniqueId, components }));
+    }
+    return entities;
+  }
+
   loadLevel(levelData = this.levelData) {
-    return levelData.entities.map((entityData) =>
-      this.createEntity(entityData)
+    return levelData.entities.flatMap((entityData) =>
+      this.createEntities(entityData)
     );
   }
 }

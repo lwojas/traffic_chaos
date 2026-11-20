@@ -108,4 +108,4 @@ See **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** for step-by-step inst
 
 - Level and prefab data live in JS files, not JSON, so they can use comments and imports but are not loaded at runtime.
 - The `EntityManager` rebuilds every system's entity list whenever a component is added or removed, so avoid adding/removing components in hot loops.
-- `EntityManager.removeEntity` is not used by the demo (`KillSystem` kills sprites but leaves the entity in the world).
+- `EntityManager.removeEntity` removes an entity from the world and every system list, but the demo doesn't call it (`KillSystem` kills sprites but leaves the entity in the world). Call `initManager.killEntity(entity)` first if you also want its sprite destroyed.

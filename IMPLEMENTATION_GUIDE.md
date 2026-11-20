@@ -253,7 +253,7 @@ Use the `pirate` or `trader` type. Behaviour is driven by `PerceptionSystem` (wh
 
 **Make an NPC player-controlled** (the whiteroom does this for `trader_test`): give it `InputComponent: ""` and `MotionShipComponent: ""` in its level overrides.
 
-**Spawn several copies**: level entries support `amount: N` and `spread: true` (see the `pirate_test` entry). Check `PrefabFactory` if you need this to behave differently; it currently maps one data entry to one entity, so verify before relying on it.
+**Spawn several copies**: a level entry with `amount: N` creates N entities (see the `pirate_test` entry). Each copy gets its own deep-copied component data. Copy 0 keeps the entry's `uniqueId`; the others get `<uniqueId>_<i>`. Add `spread: true` to fan the copies out around the entry's `Position` (override the distance with `spreadRadius`, default 40). Spread only moves a `Position` given in the level entry's `components`, not one that comes from the type defaults.
 
 ## 9. Debugging
 

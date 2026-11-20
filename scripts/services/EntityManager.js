@@ -27,8 +27,16 @@ export class EntityManager {
   }
 
   removeEntity(entity) {
-    this.world.splice(this.worldHash.get(entity));
+    const index = this.worldHash.get(entity);
+    if (index === undefined) return;
+    this.world.splice(index, 1);
     this.worldHash.delete(entity);
+    // Indices after the removed entity have shifted down by one
+    for (let i = index; i < this.world.length; i++) {
+      this.worldHash.set(this.world[i], i);
+    }
+    // Drop the entity from every system's list
+    this.updateEntityLists(entity);
   }
 
   updateEntityLists(entity) {
