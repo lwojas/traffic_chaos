@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "startLevel": "network_01",
+  "simulation": {
+    "tickRate": 30,
+    "speeds": [1, 2, 4],
+    "incidents": { "enabled": true, "duration": 15 },
+    "gridlock": { "fullSeconds": 6 },
+    "scoring": { "perVehicle": 1, "perIncident": 5 }
+  },
+  "vehicleTypes": {
+    "car":   { "typeId": "car",   "length": 34, "width": 16, "maxSpeed": 120, "accel": 70,  "decel": 90,  "reactionTime": 0.5, "minGap": 7, "patience": 12, "color": "#4aa3df" },
+    "fast":  { "typeId": "fast",  "length": 32, "width": 15, "maxSpeed": 150, "accel": 110, "decel": 100, "reactionTime": 0.3, "minGap": 5, "patience": 4,  "color": "#e04848" },
+    "slow":  { "typeId": "slow",  "length": 34, "width": 16, "maxSpeed": 80,  "accel": 40,  "decel": 70,  "reactionTime": 0.7, "minGap": 9, "patience": 25, "color": "#d8c34a" },
+    "truck": { "typeId": "truck", "length": 58, "width": 19, "maxSpeed": 90,  "accel": 35,  "decel": 60,  "reactionTime": 0.6, "minGap": 9, "patience": 15, "color": "#8a8f98" },
+    "taxi":  { "typeId": "taxi",  "length": 34, "width": 16, "maxSpeed": 125, "accel": 80,  "decel": 90,  "reactionTime": 0.4, "minGap": 6, "patience": 6,  "color": "#f2b21a" }
+  },
+  "lightingPresets": {
+    "day":     { "ambient": [255, 255, 255] },
+    "evening": { "ambient": [120, 90, 110] },
+    "night":   { "ambient": [10, 10, 40] }
+  },
+  "lightingQuality": {
+    "low":    { "lightScale": 0.5, "blur": false },
+    "medium": { "lightScale": 1, "blur": false },
+    "high":   { "lightScale": 1, "blur": true }
+  }
+}

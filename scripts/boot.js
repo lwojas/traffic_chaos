@@ -1,4 +1,5 @@
 import { Whiteroom } from "./level-whiteroom.js";
+import { TrafficLevel } from "./level-traffic.js";
 
 BasicGame.Boot = function (game) {};
 
@@ -39,7 +40,9 @@ BasicGame.Boot.prototype = {
     game.camera.roundPx = false; // stops the sprite from jittering.
     // game.camera.lerp = 0.5;
 
-    game.state.start("Whiteroom"); // Load the first level
+    // The original ship sandbox is still available at ?game=whiteroom
+    const demo = new URLSearchParams(location.search).get("game") === "whiteroom";
+    game.state.start(demo ? "Whiteroom" : "Traffic"); // Load the first level
   },
 };
 
@@ -63,6 +66,7 @@ BasicGame.Boot.prototype = {
 window.onload = function () {
   game.state.add("Boot", BasicGame.Boot);
   game.state.add("Whiteroom", Whiteroom);
+  game.state.add("Traffic", TrafficLevel);
   game.state.start("Boot");
 };
 

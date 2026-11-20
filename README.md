@@ -109,3 +109,11 @@ See **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** for step-by-step inst
 - Level and prefab data live in JS files, not JSON, so they can use comments and imports but are not loaded at runtime.
 - The `EntityManager` rebuilds every system's entity list whenever a component is added or removed, so avoid adding/removing components in hot loops.
 - `EntityManager.removeEntity` removes an entity from the world and every system list, but the demo doesn't call it (`KillSystem` kills sprites but leaves the entity in the world). Call `initManager.killEntity(entity)` first if you also want its sprite destroyed.
+
+## Traffic game (default scene)
+
+`npm start` opens the traffic network pressure-management game (`?game=whiteroom` loads the old ship sandbox). Switch signal groups (click or keys 1-4) to keep traffic flowing while demand rises. Conflicting movements released together cause incidents, incidents create temporary obstacles, obstacles cause queues, and a full input queue means gridlock. Press `D` for the debug overlay. `npm test` runs the headless simulation tests.
+
+- Level data: `data/levels/*.json` (schema v2, validated by `scripts/traffic/level/validateLevel.js`). Regenerate the compact level with `node tools/generate-network.mjs`.
+- Conflict zones are derived from movement path geometry when a level loads; they are never authored by hand.
+- Simulation update order (`scripts/traffic/session/TrafficSession.js`): demand, spawn, signals, vehicles, conflicts/incidents, obstacles, junction occupancy, outputs, stats, gridlock. Presentation runs after and only reads the world.

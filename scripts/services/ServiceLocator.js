@@ -21,8 +21,6 @@ export class ServiceLocator {
   }
 
   static shutDown() {
-    this.services.game.forEach((service) => {
-      this.services.game.delete(service);
-    });
+    this.services.game.clear();
   }
 }

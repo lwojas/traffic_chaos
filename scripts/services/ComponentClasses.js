@@ -39,6 +39,7 @@ import { PatrolComponent } from "../components/PatrolComponent.js";
 import { GoalComponent } from "../components/GoalComponent.js";
 import { TargetComponent } from "../components/TargetComponent.js";
 import { ControlIntentComponent } from "../components/ControlIntentComponent.js";
+import { trafficComponentClasses } from "../components/traffic/index.js";
 
 export const componentClasses = {
   InputComponent: InputComponent,
@@ -82,4 +83,5 @@ export const componentClasses = {
   GoalComponent: GoalComponent,
   TargetComponent: TargetComponent,
   ControlIntentComponent: ControlIntentComponent,
+  ...trafficComponentClasses,
 };

@@ -1,0 +1,723 @@
+{
+  "schemaVersion": 2,
+  "id": "network_01",
+  "name": "Pressure Test",
+  "map": {
+    "width": 1280,
+    "height": 720,
+    "background": "#33402f"
+  },
+  "traffic": {
+    "seed": 1,
+    "vehicleMix": {
+      "car": 70,
+      "fast": 10,
+      "slow": 8,
+      "truck": 7,
+      "taxi": 5
+    }
+  },
+  "demandCurves": {
+    "rush-hour": [
+      {
+        "time": 0,
+        "rate": 0.1
+      },
+      {
+        "time": 60,
+        "rate": 0.25
+      },
+      {
+        "time": 120,
+        "rate": 0.4
+      },
+      {
+        "time": 180,
+        "rate": 0.52
+      },
+      {
+        "time": 240,
+        "rate": 0.64
+      },
+      {
+        "time": 300,
+        "rate": 0.76
+      }
+    ]
+  },
+  "gridlock": {
+    "fullSeconds": 6
+  },
+  "incidents": {
+    "duration": 15
+  },
+  "scoring": {
+    "perVehicle": 1,
+    "perIncident": 5
+  },
+  "roads": [
+    {
+      "id": "road_ns",
+      "points": [
+        [
+          640,
+          0
+        ],
+        [
+          640,
+          720
+        ]
+      ],
+      "width": 80
+    },
+    {
+      "id": "road_ew",
+      "points": [
+        [
+          0,
+          360
+        ],
+        [
+          1280,
+          360
+        ]
+      ],
+      "width": 80
+    }
+  ],
+  "lanes": [
+    {
+      "id": "lane_n_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_ns",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          630,
+          0
+        ],
+        [
+          630,
+          320
+        ]
+      ]
+    },
+    {
+      "id": "lane_n_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_ns",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          610,
+          0
+        ],
+        [
+          610,
+          320
+        ]
+      ]
+    },
+    {
+      "id": "lane_n_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_ns",
+      "points": [
+        [
+          650,
+          320
+        ],
+        [
+          650,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "lane_s_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_ns",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          650,
+          720
+        ],
+        [
+          650,
+          400
+        ]
+      ]
+    },
+    {
+      "id": "lane_s_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_ns",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          670,
+          720
+        ],
+        [
+          670,
+          400
+        ]
+      ]
+    },
+    {
+      "id": "lane_s_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_ns",
+      "points": [
+        [
+          630,
+          400
+        ],
+        [
+          630,
+          720
+        ]
+      ]
+    },
+    {
+      "id": "lane_e_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_ew",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1280,
+          350
+        ],
+        [
+          680,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "lane_e_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_ew",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1280,
+          330
+        ],
+        [
+          680,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "lane_e_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_ew",
+      "points": [
+        [
+          680,
+          370
+        ],
+        [
+          1280,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "lane_w_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_ew",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          0,
+          370
+        ],
+        [
+          600,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "lane_w_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_ew",
+      "junction": "junction_main",
+      "decisionDistance": 170,
+      "points": [
+        [
+          0,
+          390
+        ],
+        [
+          600,
+          390
+        ]
+      ]
+    },
+    {
+      "id": "lane_w_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_ew",
+      "points": [
+        [
+          600,
+          350
+        ],
+        [
+          0,
+          350
+        ]
+      ]
+    }
+  ],
+  "inputGates": [
+    {
+      "id": "input_north",
+      "label": "INPUT NORTH",
+      "lanes": [
+        "lane_n_in_0",
+        "lane_n_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "rush-hour"
+      },
+      "routes": [
+        {
+          "route": "route_n_straight",
+          "weight": 6
+        },
+        {
+          "route": "route_n_right",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "id": "input_south",
+      "label": "INPUT SOUTH",
+      "lanes": [
+        "lane_s_in_0",
+        "lane_s_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "rush-hour"
+      },
+      "routes": [
+        {
+          "route": "route_s_straight",
+          "weight": 6
+        },
+        {
+          "route": "route_s_right",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "id": "input_east",
+      "label": "INPUT EAST",
+      "lanes": [
+        "lane_e_in_0",
+        "lane_e_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "rush-hour"
+      },
+      "routes": [
+        {
+          "route": "route_e_straight",
+          "weight": 6
+        },
+        {
+          "route": "route_e_right",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "id": "input_west",
+      "label": "INPUT WEST",
+      "lanes": [
+        "lane_w_in_0",
+        "lane_w_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "rush-hour"
+      },
+      "routes": [
+        {
+          "route": "route_w_straight",
+          "weight": 6
+        },
+        {
+          "route": "route_w_right",
+          "weight": 3
+        }
+      ]
+    }
+  ],
+  "outputGates": [
+    {
+      "id": "output_north",
+      "label": "OUTPUT NORTH",
+      "lane": "lane_n_out"
+    },
+    {
+      "id": "output_south",
+      "label": "OUTPUT SOUTH",
+      "lane": "lane_s_out"
+    },
+    {
+      "id": "output_east",
+      "label": "OUTPUT EAST",
+      "lane": "lane_e_out"
+    },
+    {
+      "id": "output_west",
+      "label": "OUTPUT WEST",
+      "lane": "lane_w_out"
+    }
+  ],
+  "junctions": [
+    {
+      "id": "junction_main",
+      "bounds": {
+        "x": 600,
+        "y": 320,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_n_straight",
+          "from": "lane_n_in_0",
+          "to": "lane_s_out",
+          "turn": "straight",
+          "signalGroup": "sg_ns_straight"
+        },
+        {
+          "id": "mv_n_right",
+          "from": "lane_n_in_1",
+          "to": "lane_w_out",
+          "turn": "right",
+          "signalGroup": "sg_ns_turn"
+        },
+        {
+          "id": "mv_s_straight",
+          "from": "lane_s_in_0",
+          "to": "lane_n_out",
+          "turn": "straight",
+          "signalGroup": "sg_ns_straight"
+        },
+        {
+          "id": "mv_s_right",
+          "from": "lane_s_in_1",
+          "to": "lane_e_out",
+          "turn": "right",
+          "signalGroup": "sg_ns_turn"
+        },
+        {
+          "id": "mv_e_straight",
+          "from": "lane_e_in_0",
+          "to": "lane_w_out",
+          "turn": "straight",
+          "signalGroup": "sg_ew_straight"
+        },
+        {
+          "id": "mv_e_right",
+          "from": "lane_e_in_1",
+          "to": "lane_n_out",
+          "turn": "right",
+          "signalGroup": "sg_ew_turn"
+        },
+        {
+          "id": "mv_w_straight",
+          "from": "lane_w_in_0",
+          "to": "lane_e_out",
+          "turn": "straight",
+          "signalGroup": "sg_ew_straight"
+        },
+        {
+          "id": "mv_w_right",
+          "from": "lane_w_in_1",
+          "to": "lane_s_out",
+          "turn": "right",
+          "signalGroup": "sg_ew_turn"
+        }
+      ]
+    }
+  ],
+  "signalGroups": [
+    {
+      "id": "sg_ns_straight",
+      "junction": "junction_main",
+      "label": "NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_ns_turn",
+      "junction": "junction_main",
+      "label": "NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_ew_straight",
+      "junction": "junction_main",
+      "label": "EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_ew_turn",
+      "junction": "junction_main",
+      "label": "EW TURN",
+      "initial": "red"
+    }
+  ],
+  "routes": [
+    {
+      "id": "route_n_straight",
+      "steps": [
+        "lane_n_in_0",
+        "mv_n_straight",
+        "lane_s_out"
+      ]
+    },
+    {
+      "id": "route_n_right",
+      "steps": [
+        "lane_n_in_1",
+        "mv_n_right",
+        "lane_w_out"
+      ]
+    },
+    {
+      "id": "route_s_straight",
+      "steps": [
+        "lane_s_in_0",
+        "mv_s_straight",
+        "lane_n_out"
+      ]
+    },
+    {
+      "id": "route_s_right",
+      "steps": [
+        "lane_s_in_1",
+        "mv_s_right",
+        "lane_e_out"
+      ]
+    },
+    {
+      "id": "route_e_straight",
+      "steps": [
+        "lane_e_in_0",
+        "mv_e_straight",
+        "lane_w_out"
+      ]
+    },
+    {
+      "id": "route_e_right",
+      "steps": [
+        "lane_e_in_1",
+        "mv_e_right",
+        "lane_n_out"
+      ]
+    },
+    {
+      "id": "route_w_straight",
+      "steps": [
+        "lane_w_in_0",
+        "mv_w_straight",
+        "lane_e_out"
+      ]
+    },
+    {
+      "id": "route_w_right",
+      "steps": [
+        "lane_w_in_1",
+        "mv_w_right",
+        "lane_s_out"
+      ]
+    }
+  ],
+  "obstacles": [],
+  "buildings": [
+    {
+      "id": "bld_0_0",
+      "x": 30,
+      "y": 30,
+      "w": 255,
+      "h": 115,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_0_1",
+      "x": 315,
+      "y": 30,
+      "w": 255,
+      "h": 115,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_0_2",
+      "x": 30,
+      "y": 175,
+      "w": 255,
+      "h": 115,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_0_3",
+      "x": 315,
+      "y": 175,
+      "w": 255,
+      "h": 115,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_1_0",
+      "x": 710,
+      "y": 30,
+      "w": 255,
+      "h": 115,
+      "color": "#6b6558",
+      "windows": 4
+    },
+    {
+      "id": "bld_1_1",
+      "x": 995,
+      "y": 30,
+      "w": 255,
+      "h": 115,
+      "color": "#4f5d6b",
+      "windows": 6
+    },
+    {
+      "id": "bld_1_2",
+      "x": 710,
+      "y": 175,
+      "w": 255,
+      "h": 115,
+      "color": "#665b63",
+      "windows": 8
+    },
+    {
+      "id": "bld_1_3",
+      "x": 995,
+      "y": 175,
+      "w": 255,
+      "h": 115,
+      "color": "#59606e",
+      "windows": 10
+    },
+    {
+      "id": "bld_2_0",
+      "x": 30,
+      "y": 430,
+      "w": 255,
+      "h": 115,
+      "color": "#4f5d6b",
+      "windows": 4
+    },
+    {
+      "id": "bld_2_1",
+      "x": 315,
+      "y": 430,
+      "w": 255,
+      "h": 115,
+      "color": "#665b63",
+      "windows": 6
+    },
+    {
+      "id": "bld_2_2",
+      "x": 30,
+      "y": 575,
+      "w": 255,
+      "h": 115,
+      "color": "#59606e",
+      "windows": 8
+    },
+    {
+      "id": "bld_2_3",
+      "x": 315,
+      "y": 575,
+      "w": 255,
+      "h": 115,
+      "color": "#6b6558",
+      "windows": 10
+    },
+    {
+      "id": "bld_3_0",
+      "x": 710,
+      "y": 430,
+      "w": 255,
+      "h": 115,
+      "color": "#665b63",
+      "windows": 4
+    },
+    {
+      "id": "bld_3_1",
+      "x": 995,
+      "y": 430,
+      "w": 255,
+      "h": 115,
+      "color": "#59606e",
+      "windows": 6
+    },
+    {
+      "id": "bld_3_2",
+      "x": 710,
+      "y": 575,
+      "w": 255,
+      "h": 115,
+      "color": "#6b6558",
+      "windows": 8
+    },
+    {
+      "id": "bld_3_3",
+      "x": 995,
+      "y": 575,
+      "w": 255,
+      "h": 115,
+      "color": "#4f5d6b",
+      "windows": 10
+    }
+  ],
+  "lighting": {
+    "preset": "day",
+    "enabled": false,
+    "quality": "low"
+  }
+}

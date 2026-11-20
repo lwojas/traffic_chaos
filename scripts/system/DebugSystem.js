@@ -2,13 +2,13 @@ import { ServiceLocator } from "../services/ServiceLocator.js";
 import { spriteLayers } from "./utils/spriteLayers.js";
 
 export class DebugSystem {
-  constructor() {
+  constructor({ testSprite = true } = {}) {
     this.debugData = game.make.bitmapData(
       game.camera.width,
       game.camera.height
     );
     this.debugLayer = game.add.sprite(0, 0, this.debugData);
-    const testSprite = game.add.sprite(10, 10, "defaultObject");
+    if (testSprite) game.add.sprite(10, 10, "defaultObject");
     // this.debugLayer.blendMode = PIXI.blendModes.MULTIPLY;
     spriteLayers.debug.add(this.debugLayer);
     this.debugLayer.fixedToCamera = true;

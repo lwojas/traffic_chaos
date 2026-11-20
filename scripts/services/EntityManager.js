@@ -24,6 +24,8 @@ export class EntityManager {
     // console.log(entity);
     this.world.push(entity);
     this.worldHash.set(entity, this.world.length - 1);
+    // Entities created after systems registered must show up in their lists
+    this.updateEntityLists(entity);
   }
 
   removeEntity(entity) {
@@ -40,8 +42,11 @@ export class EntityManager {
   }
 
   updateEntityLists(entity) {
+    if (this.isBatching) {
+      this.dirtyEntities.add(entity);
+      return;
+    }
     for (let [system, entityList] of this.systemEntityLists.entries()) {
-      console.log(system);
       const newList = [];
       this.world.forEach((worldEnity) => {
         const requiredComponents = system.requiredComponents;
@@ -71,7 +76,6 @@ export class EntityManager {
 
   registerSystem(system, requiredComponents) {
     system.requiredComponents = requiredComponents;
-    console.log(requiredComponents);
     const filteredEntities = [...this.world].filter((entity) =>
       requiredComponents.every(
         (comp) => entity.hasComponent(comp) && entity.isEnabled,
@@ -115,9 +119,10 @@ export class EntityManager {
   /** Ends batching and updates only the affected entities. */
   endBatch() {
     this.isBatching = false;
-    for (const entity of this.dirtyEntities) {
-      this.updateEntityLists(entity);
+    // Lists are rebuilt from the whole world, so one rebuild covers every dirty entity
+    if (this.dirtyEntities.size > 0) {
+      this.dirtyEntities.clear();
+      this.updateEntityLists();
     }
-    this.dirtyEntities.clear();
   }
 }
