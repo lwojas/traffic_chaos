@@ -114,6 +114,7 @@ See **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** for step-by-step inst
 
 `npm start` opens the traffic network pressure-management game (`?game=whiteroom` loads the old ship sandbox). Switch signal groups (click or keys 1-4) to keep traffic flowing while demand rises. Conflicting movements released together cause incidents, incidents create temporary obstacles, obstacles cause queues, and a full input queue means gridlock. Press `D` for the debug overlay. `npm test` runs the headless simulation tests.
 
+- Contributors and agents: read [TRAFFIC_GUIDE.md](TRAFFIC_GUIDE.md) first.
 - Level data: `data/levels/*.json` (schema v2, validated by `scripts/traffic/level/validateLevel.js`). Regenerate the compact level with `node tools/generate-network.mjs`.
 - Conflict zones are derived from movement path geometry when a level loads; they are never authored by hand.
 - Simulation update order (`scripts/traffic/session/TrafficSession.js`): demand, spawn, signals, vehicles, conflicts/incidents, obstacles, junction occupancy, outputs, stats, gridlock. Presentation runs after and only reads the world.
