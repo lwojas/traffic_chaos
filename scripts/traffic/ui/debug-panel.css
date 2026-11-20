@@ -1,0 +1,50 @@
+#debug-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 270px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  overflow-y: auto;
+  background: rgba(14, 17, 23, 0.94);
+  color: #d7dbe3;
+  font: 12px/1.35 system-ui, sans-serif;
+  z-index: 10;
+}
+#debug-panel { display: none; }
+body.debug-open #debug-panel { display: block; }
+#debug-panel h1 { font-size: 15px; margin: 0 0 8px; }
+#debug-panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8a93a5; margin: 12px 0 5px; }
+#debug-panel .row { display: flex; gap: 4px; margin-bottom: 4px; flex-wrap: wrap; }
+#debug-panel select, #debug-panel button { font: inherit; color: inherit; background: #232937; border: 1px solid #343c4e; border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+#debug-panel select { width: 100%; }
+#debug-panel button:hover { background: #2d3548; }
+#debug-panel button.active { background: #2f6fed; border-color: #5b90ff; }
+#debug-panel .signal { margin-bottom: 6px; }
+#debug-panel .signal button { margin: 0 4px 4px 0; }
+#debug-panel .sig-title { color: #aab2c3; margin-bottom: 3px; }
+#debug-panel table { width: 100%; border-collapse: collapse; }
+#debug-panel td { padding: 1px 0; }
+#debug-panel td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: #fff; }
+#debug-panel .inline { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; text-transform: none; letter-spacing: 0; }
+#debug-panel .layers { display: flex; flex-wrap: wrap; }
+#debug-panel .perf { margin-top: 8px; color: #7d8699; font: 11px monospace; }
+#debug-panel .error { margin-top: 8px; color: #ff7a85; white-space: pre-wrap; font: 11px monospace; }
+#debug-panel .hint { color: #6f788b; font-size: 11px; }
+#debug-panel button.risky { border-color: #8a4a2a; color: #ffb48a; }
+#debug-panel .banner { display: none; background: #5a1520; border: 1px solid #ff4060; color: #fff; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; }
+#debug-panel .banner.show { display: block; }
+#debug-panel .signal-btn { display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 4px; text-align: left; }
+#debug-panel .signal-btn .key { color: #8a93a5; width: 10px; }
+#debug-panel .signal-btn .name { flex: 1; }
+#debug-panel .signal-btn .state { font-variant-numeric: tabular-nums; font-weight: 600; }
+#debug-panel .signal-btn[data-state="green"] { background: #1f5a33; border-color: #46c46a; }
+#debug-panel .signal-btn[data-state="yellow"] { background: #5a4a14; border-color: #f2c744; }
+#debug-panel .signal-btn[data-state="red"] { background: #4d1d22; border-color: #e5484d; }
+#debug-panel .gate { margin-bottom: 5px; }
+#debug-panel .gate-title { display: flex; justify-content: space-between; color: #aab2c3; }
+#debug-panel .bar { height: 7px; background: #232937; border-radius: 3px; overflow: hidden; }
+#debug-panel .bar .fill { height: 100%; background: #46c46a; }
+#debug-panel .gate.full .fill { background: #ff4060; }
+#debug-panel .obstacles { white-space: pre-line; color: #ffb060; }

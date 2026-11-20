@@ -19,13 +19,16 @@ const STAT_ROWS = [
 const STATE_LABEL = ["RED", "YELLOW", "GREEN"];
 const GROUP_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-// DOM control panel. Talks to the TrafficGame (lifecycle) and the session
-// (commands, stats). It never touches Phaser objects, and reads the ECS world
-// only to display it.
-export class TrafficHud {
-  constructor(app, debugFlags, root = document.getElementById("hud")) {
+// Development panel (debug mode). Detailed simulation state, every signal group,
+// level switching and the debug-overlay layers. The player HUD (hud/GameHud.js)
+// is deliberately much simpler and does not depend on this. Talks to the game
+// through GameActions; reads the ECS world only to display it, never writes.
+export class DebugPanel {
+  constructor(app, actions, debug, root = document.getElementById("debug-panel")) {
     this.app = app;
-    this.flags = debugFlags;
+    this.actions = actions;
+    this.debug = debug;
+    this.flags = debug.flags;
     this.root = root;
     this.statCells = [];
     this.groups = [];
@@ -33,13 +36,17 @@ export class TrafficHud {
     this.build();
     this.onKey = (e) => this.handleKey(e);
     window.addEventListener("keydown", this.onKey);
-    this.timer = setInterval(() => this.refresh(), 150);
+    this.unsubscribe = debug.onChange(() => {
+      this.syncDebug();
+      if (debug.open) this.refresh();
+    });
+    this.timer = setInterval(() => this.debug.open && this.refresh(), 150);
   }
 
   build() {
     const r = this.root;
     r.innerHTML = `
-      <h1>Traffic Control</h1>
+      <h1>Traffic Control: debug</h1>
       <div class="banner" data-id="banner"></div>
       <div class="row"><select data-id="level"></select></div>
       <div class="row">
@@ -60,13 +67,13 @@ export class TrafficHud {
       <div data-id="layers" class="layers"></div>
       <div class="perf" data-id="perf"></div>
       <div class="error" data-id="error"></div>
-      <p class="hint">Click a signal (or press 1-4) to switch it. Green is instant; red goes through yellow first. Nothing stops you opening conflicting movements, and nothing adds a gap between phases: wait for the old group to clear before opening the next. Speed: Q / W / E. Click a car in debug mode to trace it.</p>`;
+      <p class="hint">Signals are normally switched from the world; here you can switch any of them (or press 1-9). Debug mode: D. Green is instant; red goes through yellow first. Nothing stops you opening conflicting movements, and nothing adds a gap between phases: wait for the old group to clear before opening the next. Speed: Q / W / E. Click a car in debug mode to trace it.</p>`;
     r.addEventListener("click", (e) => {
       const b = e.target.closest("button");
       if (b) this.act(b.dataset.act, b.dataset);
     });
-    r.querySelector('[data-id="level"]').addEventListener("change", (e) => this.guard(this.app.launchLevel(e.target.value)));
-    r.querySelector('[data-id="debug"]').addEventListener("change", (e) => (this.flags.enabled = e.target.checked));
+    r.querySelector('[data-id="level"]').addEventListener("change", (e) => this.actions.launchLevel(e.target.value));
+    r.querySelector('[data-id="debug"]').addEventListener("change", (e) => this.debug.setOverlay(e.target.checked));
     const layers = r.querySelector('[data-id="layers"]');
     for (const name of DEBUG_LAYERS) {
       const label = document.createElement("label");
@@ -126,41 +133,32 @@ export class TrafficHud {
     this.root.querySelector('[data-id="error"]').textContent = err.message;
   }
 
-  guard(promise) {
-    promise.catch((err) => this.showError(err));
-  }
-
   act(action, data) {
-    const s = this.app.session;
+    const a = this.actions;
     switch (action) {
-      case "restart": return this.guard(this.app.restartLevel());
-      case "reload": return this.guard(this.app.reloadLevelData());
-      case "next": return this.guard(this.app.loadNextLevel());
-      case "pause": return s && s.setPaused(!s.sim.paused);
-      case "step": return s && s.sim.paused && s.step(1);
-      case "speed": return s && s.setSpeed(Number(data.speed));
-      case "toggle": return s && !s.gameOver && s.toggleSignal(data.group);
+      case "restart": return a.restart();
+      case "reload": return a.reloadData();
+      case "next": return a.nextLevel();
+      case "pause": return a.togglePause();
+      case "step": return a.step();
+      case "speed": return a.setSpeed(Number(data.speed));
+      case "toggle": return a.toggleSignal(data.group);
     }
   }
 
+  // Pause, restart, speed and debug-mode keys belong to the game HUD; the panel keeps step and the 1-9 signal shortcuts.
   handleKey(e) {
-    const s = this.app.session;
-    if (!s || e.target.tagName === "SELECT" || e.ctrlKey || e.metaKey) return;
+    if (!this.debug.open || !this.app.session || ["SELECT", "INPUT"].includes(e.target.tagName) || e.ctrlKey || e.metaKey) return;
     const key = e.key.toLowerCase();
-    const speeds = this.app.config.simulation.speeds ?? [1];
-    if (key === " ") { e.preventDefault(); this.act("pause"); }
-    else if (key === ".") this.act("step");
-    else if (key === "r") this.act("restart");
-    else if (key === "d") {
-      this.flags.enabled = !this.flags.enabled;
-      this.root.querySelector('[data-id="debug"]').checked = this.flags.enabled;
-    } else if (["q", "w", "e"].includes(key)) {
-      const speed = speeds[["q", "w", "e"].indexOf(key)];
-      if (speed) this.act("speed", { speed });
-    } else {
+    if (key === ".") this.act("step");
+    else {
       const i = GROUP_KEYS.indexOf(key);
       if (i >= 0 && this.groups[i]) this.act("toggle", { group: this.groups[i].levelId });
     }
+  }
+
+  syncDebug() {
+    this.root.querySelector('[data-id="debug"]').checked = this.flags.enabled;
   }
 
   refresh() {
@@ -207,6 +205,7 @@ export class TrafficHud {
 
   destroy() {
     window.removeEventListener("keydown", this.onKey);
+    this.unsubscribe();
     clearInterval(this.timer);
   }
 }

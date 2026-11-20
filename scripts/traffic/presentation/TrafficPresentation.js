@@ -5,22 +5,26 @@ import { VehicleTextures } from "./vehicleTextures.js";
 import { TrafficDebugView } from "./TrafficDebugView.js";
 import { PALETTE, hex } from "./colors.js";
 import { pointAt } from "../util/geometry.js";
+import { SignalControlLayer } from "./SignalControlLayer.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
 
 // Phaser-side view of a TrafficSession. Reads ECS state and draws it; owns no
-// simulation state and never writes back into the world.
+// simulation state and never writes back into the world. The only way it changes
+// the game is the `actions` it is given (signal commands from world controls).
+//   camera   ViewCamera: the single source of truth for where the view is. This
+//            class only copies it onto the engine camera each frame.
 export class TrafficPresentation {
-  constructor(session, debugFlags) {
+  constructor(session, { debugFlags, camera, actions }) {
     this.session = session;
+    this.camera = camera;
     const em = session.entityManager;
     const map = session.level.map;
 
     initialiseSpriteLayers();
     game.world.setBounds(0, 0, map.width, map.height);
     game.stage.backgroundColor = map.background ?? "#222";
-    game.camera.x = 0;
-    game.camera.y = 0;
+    this.syncCamera();
 
     this.lanes = em.registerSystem({}, ["LaneComponent"]);
     this.inputGates = em.registerSystem({}, ["InputGateComponent"]);
@@ -50,9 +54,25 @@ export class TrafficPresentation {
     this.pool = [];
     this.frame = 0;
 
+    // World-space UI: lives in the world, so it moves with the camera by itself
+    this.worldUi = new SignalControlLayer({
+      level: session.level,
+      groups: new Map(this.groups.map((e) => [e.id, e.components.SignalGroupComponent])),
+      layer: spriteLayers.fg5,
+      onToggle: (groupId) => actions.toggleSignal(groupId),
+      isPending: (groupId) => actions.isSignalPending(groupId),
+    });
+
     this.debugSystem = new DebugSystem({ testSprite: false });
-    this.debugView = new TrafficDebugView(session, this.debugSystem, debugFlags);
+    this.debugView = new TrafficDebugView(session, this.debugSystem, debugFlags, camera);
     this.pointerBinding = game.input.onDown.add((p) => this.debugView.pick(p.worldX, p.worldY));
+  }
+
+  // Viewport size flows engine -> ViewCamera (it resizes with the window); position flows ViewCamera -> engine.
+  syncCamera() {
+    this.camera.setViewport(game.camera.width, game.camera.height);
+    game.camera.x = this.camera.x;
+    game.camera.y = this.camera.y;
   }
 
   drawStatic(session) {
@@ -133,6 +153,9 @@ export class TrafficPresentation {
   }
 
   update() {
+    this.syncCamera();
+    this.worldUi.update();
+    this.worldUi.refreshTooltip();
     this.syncLights();
     this.syncVehicles();
     this.syncObstacles();
@@ -222,6 +245,7 @@ export class TrafficPresentation {
 
   destroy() {
     this.pointerBinding.detach();
+    this.worldUi.destroy();
     this.textures.destroy();
     game.world.removeAll(true);
   }

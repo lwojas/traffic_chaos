@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "startLevel": "network_01",
+  "startLevel": "network_02",
   "simulation": {
     "tickRate": 30,
     "speeds": [1, 2, 4],

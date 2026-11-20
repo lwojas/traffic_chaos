@@ -6,9 +6,10 @@ const read = (p) => JSON.parse(readFileSync(new URL(`../../data/${p}`, import.me
 
 export const gameConfig = read("game-config.json");
 export const level01 = read("levels/network-01.json");
+export const level02 = read("levels/network-02.json");
 export const clone = (o) => structuredClone(o);
 
-export function memoryProvider(levels = [level01]) {
+export function memoryProvider(levels = [level02, level01]) {
   return new MemoryDataProvider({ gameConfig, levels: Object.fromEntries(levels.map((l) => [l.id, l])) });
 }
 

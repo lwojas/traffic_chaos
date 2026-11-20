@@ -16,6 +16,8 @@ export class TrafficStatsComponent {
     this.queueIntegral = 0;
     this.inputQueued = 0; // vehicles waiting in input gate queues
     this.inputCapacity = 0;
+    this.peakQueueFill = 0; // 0..1: fullest input queue; 1 means a gate is full and the gridlock timer is running
+    this.gridlockProgress = 0; // 0..1: how far the longest full-queue timer is toward ending the level
     this.throughputPerMin = 0;
     this.junctionUtilisation = 0;
     this.incidents = 0;

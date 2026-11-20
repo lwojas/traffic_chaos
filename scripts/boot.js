@@ -33,7 +33,7 @@ BasicGame.Boot.prototype = {
 
   create: function () {
     game.stage.backgroundColor = "#999";
-    this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL; // Scale the canvas to fit the whole window
+    this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL; // Scale the canvas to fit the whole window (the traffic game switches to RESIZE)
     this.world.setBounds(0, 0, 2000, 2000); // Set the size of the game world - this is not the size of the camera
     this.time.advancedTiming = true;
     this.physics.startSystem(Phaser.Physics.ARCADE);

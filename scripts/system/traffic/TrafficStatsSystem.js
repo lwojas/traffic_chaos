@@ -103,12 +103,21 @@ export class TrafficStatsSystem extends System {
     let queued = 0;
     let capacity = 0;
     let rate = 0;
+    let peakFill = 0;
+    let peakFull = 0;
+    const fullSeconds = sim.gridlock.fullSeconds;
     for (let i = 0; i < this.gates.length; i++) {
       const g = this.gates[i].components.InputGateComponent;
       queued += g.queue.length;
       capacity += g.queueCapacity;
       rate += g.rate;
+      const fill = g.queue.length / g.queueCapacity;
+      if (fill > peakFill) peakFill = fill;
+      const full = fullSeconds > 0 ? g.fullTime / fullSeconds : 0; // GridlockSystem runs after this, so one tick behind
+      if (full > peakFull) peakFull = full;
     }
+    s.peakQueueFill = peakFill;
+    s.gridlockProgress = Math.min(1, peakFull);
     s.inputQueued = queued;
     s.inputCapacity = capacity;
     s.demandRate = rate;

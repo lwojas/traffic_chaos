@@ -10,15 +10,24 @@
     <script src="scripts/phaser.js"></script>
     <script src="scripts/init.js"></script>
     <script type="module" src="scripts/boot.js" defer></script>
-    <link rel="stylesheet" href="scripts/traffic/ui/hud.css" />
+    <link rel="stylesheet" href="scripts/traffic/ui/game-hud.css" />
+    <link rel="stylesheet" href="scripts/traffic/ui/debug-panel.css" />
     <style>
+      html,
       body {
         margin: 0;
+        height: 100%;
+        overflow: hidden;
         background-color: #333;
       }
     </style>
   </head>
   <body>
-    <div id="hud"></div>
+    <!-- The game viewport: the engine canvas fills it, the HUD is anchored to it.
+         Edge scrolling and the HUD layout are relative to this element, not the browser window. -->
+    <div id="game-viewport">
+      <div id="game-hud"></div>
+    </div>
+    <div id="debug-panel"></div>
   </body>
 </html>

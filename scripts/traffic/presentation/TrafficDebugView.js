@@ -9,8 +9,9 @@ const LIGHT_CSS = ["#e5484d", "#f2c744", "#46c46a"];
 
 // Debug overlay drawn into the engine's DebugSystem bitmap. Reads ECS state only.
 export class TrafficDebugView {
-  constructor(session, debugSystem, flags) {
+  constructor(session, debugSystem, flags, camera) {
     this.session = session;
+    this.camera = camera; // ViewCamera: the overlay bitmap is viewport-sized and fixed to the screen, so world drawing is offset by it
     this.debugSystem = debugSystem;
     this.flags = flags;
     this.selected = null;
@@ -27,8 +28,12 @@ export class TrafficDebugView {
   update() {
     const ds = this.debugSystem;
     ds.update(); // clears
-    if (!this.flags.enabled) return (ds.debugData.dirty = true);
-    const ctx = ds.debugData.ctx;
+    const bmp = ds.debugData;
+    if (bmp.width !== this.camera.width || bmp.height !== this.camera.height) bmp.resize(this.camera.width, this.camera.height);
+    if (!this.flags.enabled) return (bmp.dirty = true);
+    const ctx = bmp.ctx;
+    ctx.save();
+    ctx.translate(-this.camera.x, -this.camera.y);
     const on = this.flags.layers;
     ctx.lineJoin = "round";
     ctx.font = "11px monospace";
@@ -95,7 +100,8 @@ export class TrafficDebugView {
     if (on.obstacles) this.drawObstacles(ctx);
     if (on.vehicles) this.drawVehicleLabels(ctx);
     if (on.routes && this.selected && this.selected.components.VehicleStateComponent) this.drawRoute(ctx, this.selected);
-    ds.debugData.dirty = true;
+    ctx.restore();
+    bmp.dirty = true;
   }
 
   drawMovement(ctx, lane) {
@@ -133,8 +139,8 @@ export class TrafficDebugView {
       const lane = g.lanes[0].components.LaneComponent;
       const full = g.queue.length >= g.queueCapacity;
       pointAt(lane.path, 30, _p);
-      const x = Math.min(Math.max(_p.x + 14, 4), 1100);
-      const y = Math.min(Math.max(_p.y - 6, 14), 700);
+      const x = _p.x + 14;
+      const y = _p.y - 6;
       ctx.fillStyle = full ? "#ff4060" : "#46c46a";
       ctx.fillText(`${g.label} ${this.bar(g.queue.length, g.queueCapacity)} ${g.queue.length}/${g.queueCapacity}  ${g.rate.toFixed(2)}/s${g.overflow ? " lost " + g.overflow : ""}`, x, y);
       row++;
@@ -144,7 +150,7 @@ export class TrafficDebugView {
       const lane = g.lane.components.LaneComponent;
       pointAt(lane.path, lane.length - 30, _p);
       ctx.fillStyle = "#ff9a9a";
-      ctx.fillText(`${g.label} ${g.throughput}`, Math.min(Math.max(_p.x + 14, 4), 1100), Math.min(Math.max(_p.y + 14, 14), 700));
+      ctx.fillText(`${g.label} ${g.throughput}`, _p.x + 14, _p.y + 14);
     }
   }
 
@@ -154,13 +160,14 @@ export class TrafficDebugView {
   }
 
   drawSignals(ctx) {
-    let i = 0;
+    const rows = new Map(); // junction -> labels drawn so far
     for (const e of this.groups) {
       const g = e.components.SignalGroupComponent;
       const j = this.session.entity(g.junctionId).getComponent("JunctionComponent").bounds;
+      const i = rows.get(g.junctionId) ?? 0;
+      rows.set(g.junctionId, i + 1);
       ctx.fillStyle = LIGHT_CSS[g.state];
       ctx.fillText(`${g.label} ${["RED", "YELLOW", "GREEN"][g.state]} ${g.timeInState.toFixed(1)}s`, j.x - 60, j.y + j.h + 18 + i * 13);
-      i++;
     }
   }
 
@@ -188,6 +195,7 @@ export class TrafficDebugView {
     ctx.fillStyle = "#e8e8e8";
     for (const v of this.session.vehicles()) {
       const p = v.components.Position;
+      if (!this.camera.isVisible(p.x, p.y, 40)) continue;
       const vs = v.components.VehicleStateComponent;
       const steps = vs.route.components.RouteComponent.steps;
       const move = steps[1].id.replace("mv_", "");

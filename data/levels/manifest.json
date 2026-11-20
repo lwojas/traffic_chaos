@@ -1,6 +1,15 @@
 {
   "schemaVersion": 2,
   "levels": [
-    { "id": "network_01", "name": "Pressure Test", "file": "network-01.json" }
+    {
+      "id": "network_02",
+      "name": "City Grid",
+      "file": "network-02.json"
+    },
+    {
+      "id": "network_01",
+      "name": "Pressure Test",
+      "file": "network-01.json"
+    }
   ]
 }
