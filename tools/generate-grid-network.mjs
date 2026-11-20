@@ -8,9 +8,13 @@
 // approach of the next, so a link lane carries both its straight and right-turn
 // movements. Conflicts are NOT written here: they are derived at load time.
 import { writeFileSync } from "node:fs";
+import { applyMeta } from "./levelMeta.mjs";
 
-const COLS = 3, ROWS = 2;
-const X0 = 700, Y0 = 450, DX = 1000, DY = 800, HALF = 40;
+// Variants:  node tools/generate-grid-network.mjs            -> network_02 (3x2 City Grid)
+//            node tools/generate-grid-network.mjs connected  -> network_03 (2x1, two junctions on one road)
+const VARIANT = process.argv[2] === "connected" ? { cols: 2, rows: 1, id: "network_03", name: "Connected Junctions", file: "network-03.json", dx: 900 } : { cols: 3, rows: 2, id: "network_02", name: "City Grid", file: "network-02.json", dx: 1000 };
+const COLS = VARIANT.cols, ROWS = VARIANT.rows;
+const X0 = 700, Y0 = 450, DX = VARIANT.dx, DY = 800, HALF = 40;
 const W = X0 * 2 + DX * (COLS - 1), H = Y0 * 2 + DY * (ROWS - 1);
 
 const DIR = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
@@ -157,8 +161,8 @@ for (let r = 0; r < ROWS; r++) roads.push({ id: `road_h${r}`, points: [[0, Y0 + 
 
 const level = {
   schemaVersion: 2,
-  id: "network_02",
-  name: "City Grid",
+  id: VARIANT.id,
+  name: VARIANT.name,
   map: { width: W, height: H, background: "#33402f" },
   traffic: { seed: 7, vehicleMix: { car: 70, fast: 10, slow: 8, truck: 7, taxi: 5 } },
   // Arrivals per second at EACH input gate
@@ -186,5 +190,5 @@ const level = {
   lighting: { preset: "day", enabled: false, quality: "low" },
 };
 
-writeFileSync(new URL("../data/levels/network-02.json", import.meta.url), JSON.stringify(level, null, 2) + "\n");
-console.log(`wrote data/levels/network-02.json (${W}x${H}, ${junctions.length} junctions, ${inputGates.length} gates, ${routes.length} routes, ${buildings.length} buildings)`);
+writeFileSync(new URL(`../data/levels/${VARIANT.file}`, import.meta.url), JSON.stringify(applyMeta(level), null, 2) + "\n");
+console.log(`wrote data/levels/${VARIANT.file} (${W}x${H}, ${junctions.length} junctions, ${inputGates.length} gates, ${routes.length} routes, ${buildings.length} buildings)`);

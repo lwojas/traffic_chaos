@@ -32,6 +32,17 @@ export class GameActions {
   launchLevel(id) {
     this.guard(this.app.launchLevel(id));
   }
+  // Map list with locks and medals for the level-select panel
+  mapList() {
+    const metas = this.app.registry.metas;
+    return this.app.progression ? this.app.progression.list(metas) : metas.map((m) => ({ id: m.id, name: m.name, blurb: m.progression?.blurb ?? "", unlocked: true, medal: null, requires: null }));
+  }
+  hasNextOpen() {
+    const app = this.app;
+    const ids = app.registry.list().map((e) => e.id);
+    const open = app.progression.unlockedIds(app.registry.metas);
+    return ids.slice(ids.indexOf(app.levelId) + 1).some((id) => open.has(id));
+  }
 
   togglePause() {
     const s = this.session;
@@ -58,6 +69,12 @@ export class GameActions {
     const cmds = s.sim.commands;
     for (let i = 0; i < cmds.length; i++) if (cmds[i].group === groupId) return true;
     return false;
+  }
+
+  // Spend cash on an intervention. The simulation re-checks it at the next tick.
+  tow(obstacleId) {
+    const s = this.session;
+    if (s && !s.gameOver) s.intervene("tow", obstacleId);
   }
 
   toggleDebug() {

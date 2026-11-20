@@ -92,3 +92,38 @@ button.hud-panel, .hud-button, .hud-queue { font: inherit; color: inherit; curso
 .hud-over { border-color: var(--c-bad); background: rgba(60, 14, 22, 0.92); }
 .hud-banner-title { font-size: var(--f-big, 30px); font-weight: 800; color: var(--c-bad); }
 .hud-banner-detail { white-space: pre-line; margin: 6px 0 10px; }
+
+/* Cash, Flow chain, tow truck */
+.hud-cash { width: var(--w-score, 150px); }
+.hud-flow { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: var(--f-small, 11px); font-weight: 800; letter-spacing: 0.05em; }
+.hud-flow-x { color: var(--c-textDim); }
+.hud-flow-x.hot { color: #ffe27a; text-shadow: 0 0 8px rgba(255, 200, 60, 0.6); }
+.hud-flow-pips { display: inline-flex; gap: 3px; }
+.hud-flow-pips i { width: 9px; height: 9px; border-radius: 50%; background: var(--c-track); }
+.hud-flow-pips i.on { background: #ffcf4a; box-shadow: 0 0 6px rgba(255, 200, 60, 0.7); }
+.hud-flow-track { height: 4px; margin: 4px 0 6px; }
+.hud-flow-fill { background: #ffcf4a; transition: width 0.2s linear; }
+.hud-tow { width: 250px; border-color: var(--c-hazard); }
+.hud-tow[hidden] { display: none; }
+.hud-tow-list { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.hud-tow-row { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; font-size: var(--f-small, 11px); }
+.hud-tow-go { background: #5a3a12; border-color: var(--c-hazard); font-weight: 700; }
+.hud-tow-go:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Result card */
+.hud-result { width: 400px; text-align: center; }
+.hud-result.win { border-color: var(--c-good); background: rgba(14, 40, 26, 0.94); }
+.hud-medal { font-size: 54px; line-height: 1; margin: 2px 0; }
+.hud-medal[data-medal="bronze"] { color: #cd8b4a; }
+.hud-medal[data-medal="silver"] { color: #cfd6e2; }
+.hud-medal[data-medal="gold"] { color: #ffcf4a; text-shadow: 0 0 14px rgba(255, 200, 60, 0.6); }
+.hud-medal[data-medal="none"] { color: var(--c-textDim); }
+.hud-result-next { font-size: var(--f-small, 11px); color: var(--c-textDim); margin: 4px 0 8px; white-space: pre-line; }
+.hud-result-actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+/* Map select */
+.hud-maps { width: 330px; }
+.hud-map-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 3px 0; }
+.hud-map-row button { text-align: left; }
+.hud-map-row.locked { opacity: 0.5; }
+.hud-map-note { font-size: var(--f-small, 11px); color: var(--c-textDim); }

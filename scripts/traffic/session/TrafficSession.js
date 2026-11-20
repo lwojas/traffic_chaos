@@ -15,8 +15,18 @@ import { JunctionSystem } from "../../system/traffic/JunctionSystem.js";
 import { OutputGateSystem } from "../../system/traffic/OutputGateSystem.js";
 import { TrafficStatsSystem } from "../../system/traffic/TrafficStatsSystem.js";
 import { GridlockSystem } from "../../system/traffic/GridlockSystem.js";
+import { FlowSystem } from "../../system/traffic/FlowSystem.js";
+import { InterventionSystem } from "../../system/traffic/InterventionSystem.js";
+import { ShiftSystem } from "../../system/traffic/ShiftSystem.js";
 
 const MAX_STEPS_PER_FRAME = 8;
+
+// Per-intervention merge: a level can retune `tow.cost` without restating the rest.
+function mergeInterventions(base = {}, over = {}) {
+  const out = {};
+  for (const id of new Set([...Object.keys(base), ...Object.keys(over)])) out[id] = { ...base[id], ...over[id] };
+  return out;
+}
 
 // One running level: an ECS world plus a fixed-timestep runner. No Phaser
 // dependency, so it runs identically in the browser and under Node tests.
@@ -57,6 +67,10 @@ export class TrafficSession {
           incidents: { ...rules.incidents, ...level.incidents },
           gridlock: { ...rules.gridlock, ...level.gridlock },
           scoring: { ...rules.scoring, ...level.scoring },
+          economy: { ...rules.economy, ...level.economy },
+          flow: { ...rules.flow, ...level.flow },
+          interventions: mergeInterventions(rules.interventions, level.interventions),
+          goal: level.goal,
           scheduledObstacles: structuredClone(level.obstacles ?? []).sort((a, b) => a.at - b.at),
         },
         TrafficStatsComponent: {},
@@ -72,26 +86,32 @@ export class TrafficSession {
     //   1 demand      arrivals join the finite input queues
     //   2 spawn       queue heads enter the network if their lane has room
     //   3 signals     player commands -> signal group states
-    //   4-5 vehicles  approach, stop-line decisions, movement along paths
-    //   6-7 conflicts two vehicles in one conflict zone -> incident + obstacle
-    //   8 obstacles   activate, count down, clear (blocks act as stopped leaders)
-    //   9 junctions   box occupancy / blocked-box detection
-    //  10 outputs     arrived vehicles leave the network, throughput++
-    //  11 stats       queues, capacity, load, score
-    //  12 gridlock    a full input queue for long enough ends the level
-    // (13, presentation, runs outside the simulation and only reads it.)
+    //   4 interventions  player spends cash (tow truck): edits obstacle timers
+    //   5-6 vehicles  approach, stop-line decisions, movement along paths
+    //   7-8 conflicts two vehicles in one conflict zone -> incident + obstacle
+    //   9 obstacles   activate, count down, clear (blocks act as stopped leaders)
+    //  10 junctions   box occupancy / blocked-box detection
+    //  11 outputs     arrived vehicles leave the network, throughput++
+    //  12 flow        held queues -> releases -> cash and the Flow chain
+    //  13 stats       queues, capacity, load, score
+    //  14 gridlock    a full input queue for long enough ends the level
+    //  15 shift       surviving goal.surviveSeconds completes it
+    // (presentation runs outside the simulation and only reads it.)
     this.vehicleSystem = new VehicleSystem();
     this.systems = [
       new TrafficDemandSystem(),
       new VehicleSpawnSystem(),
       new TrafficSignalSystem(),
+      (this.interventions = new InterventionSystem()),
       this.vehicleSystem,
       new JunctionConflictSystem(),
       new ObstacleSystem(this.vehicleSystem, (id) => this.entities.get(id)),
       new JunctionSystem(),
       new OutputGateSystem(this.vehicleSystem),
+      (this.flow = new FlowSystem()),
       new TrafficStatsSystem(),
       new GridlockSystem(),
+      new ShiftSystem(),
     ];
 
     this.accumulator = 0;
@@ -162,6 +182,29 @@ export class TrafficSession {
 
   get gameOver() {
     return this.sim.status !== "running";
+  }
+
+  // Player intervention (tow truck...). Applied at the next tick if still allowed.
+  intervene(id, target) {
+    this.command({ type: `intervention.${id}`, target });
+  }
+
+  // End-of-run numbers for ratings and the result card.
+  summary() {
+    const st = this.stats;
+    return {
+      status: this.sim.status,
+      time: st.time,
+      earned: st.earned,
+      cash: st.cash,
+      incidents: st.incidents,
+      throughput: st.completed,
+      peakFlow: st.peakFlow,
+      releases: st.releases,
+      cleanReleases: st.cleanReleases,
+      biggestRelease: st.biggestRelease,
+      towsUsed: st.towsUsed,
+    };
   }
 
   vehicles() {

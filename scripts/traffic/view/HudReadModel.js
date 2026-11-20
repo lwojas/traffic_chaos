@@ -24,6 +24,8 @@ export class HudReadModel {
       const pos = pointAt(lane.path, Math.max(0, lane.length - 40), { x: 0, y: 0, angle: 0 });
       return { gate: g, x: pos.x, y: pos.y };
     });
+    // Flow streams are static topology too: where each one's stop line and queue tail are
+    this.streams = session.flow.streams;
     // Obstacles come and go: the manager replaces `.entities`, so read it fresh
     this.obstacleSystem = {};
     this.obstacleSystem.entities = em.registerSystem(this.obstacleSystem, ["ObstacleComponent"]);
@@ -44,7 +46,7 @@ export class HudReadModel {
       y,
     }));
     return {
-      status: sim.status, // running | gridlock
+      status: sim.status, // running | gridlock | complete
       paused: sim.paused,
       speed: sim.speed,
       time: st.time,
@@ -57,10 +59,34 @@ export class HudReadModel {
       gridlockSeconds: sim.gridlock.fullSeconds,
       incidentsActive: st.activeObstacles,
       incidentsTotal: st.incidents,
+      cash: st.cash,
+      earned: st.earned,
+      flow: this.readFlow(),
+      streams: this.readStreams(),
+      tow: s.interventions.describe("tow"),
       gates,
       incidents: this.readIncidents(),
+      result: sim.status === "running" ? null : this.session.summary(),
       gridlock: sim.status === "gridlock" ? { time: sim.gridlockTime, gate: sim.gridlockGate.getComponent("InputGateComponent").label } : null,
     };
+  }
+
+  readFlow() {
+    const f = this.session.flow;
+    const steps = f.cfg.steps;
+    return { multiplier: f.multiplier, step: f.chain.index, steps: steps.length, timeLeft: f.chainTimeLeft, timeTotal: f.cfg.chainSeconds, peak: this.session.stats.peakFlow };
+  }
+
+  // Per Flow stream: where it is and how loaded. The minimap uses these for pressure markers.
+  readStreams() {
+    return this.streams.map((s) => {
+      pointAt(s.lane.path, s.lane.stopLineS, _p);
+      const x = _p.x;
+      const y = _p.y;
+      const slot = s.lane.length / s.capacity;
+      pointAt(s.lane.path, Math.max(0, s.lane.stopLineS - s.queue * slot), _p);
+      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked };
+    });
   }
 
   readIncidents() {
@@ -80,7 +106,7 @@ export class HudReadModel {
         x = _p.x;
         y = _p.y;
       } else continue;
-      out.push({ id: o.levelId, kind: o.kind, x, y, remaining: Math.max(0, o.remaining) });
+      out.push({ id: o.levelId, kind: o.kind, x, y, remaining: Math.max(0, o.remaining), towed: o.towed, blocked: o.blocks.length, towRefusal: this.session.interventions.refusal("tow", o.levelId) });
     }
     return out;
   }

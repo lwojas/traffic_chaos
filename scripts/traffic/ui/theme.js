@@ -18,9 +18,25 @@ export const UI = {
     accent: "#4c8dff",
     track: "#262c3a",
   },
-  minimap: { maxWidth: 240, maxHeight: 160, maxViewportShare: 0.34, background: "#161b24", road: "#5d6573", junction: "#8a93a5", viewport: "#ffffff", input: "#46c46a", output: "#e5484d", incident: "#ff8a1f" },
-  // World-space signal controls (Phaser). Sizes are in world px.
-  signalControl: { size: 26, gap: 4, roadsideMargin: 6, hitPadding: 3, border: 2, borderHover: 3, colors: { fill: [0xe5484d, 0xf2c744, 0x46c46a], border: 0x10131a, hover: 0xffffff, glyph: 0x10131a, pending: 0xffffff }, tooltip: { font: "12px system-ui, sans-serif", padding: 5 } },
+  minimap: { maxWidth: 240, maxHeight: 160, maxViewportShare: 0.34, background: "#161b24", road: "#5d6573", junction: "#8a93a5", viewport: "#ffffff", input: "#46c46a", output: "#e5484d", incident: "#ff8a1f", risk: ["#46c46a", "#f2c744", "#ff8a1f", "#e5484d"] },
+  // World-space signal controls (Phaser). Sizes are in world px. `size` is the whole control box (button + label).
+  signalControl: {
+    size: 46, gap: 4, roadsideMargin: 4, hitPadding: 3, radius: 16, lift: 6, ring: 5, hoverScale: 1.14,
+    colors: {
+      light: [0xe5484d, 0xf2c744, 0x46c46a], // indexed by LightState
+      lightDark: [0x9c2a30, 0xa8872a, 0x2c8a48],
+      risk: [0x46c46a, 0xf2c744, 0xff8a1f, 0xe5484d], // SAFE, PRESSURE, DANGER, CRITICAL
+      track: 0x10131a,
+      glyph: 0xffffff,
+      hover: 0xffffff,
+      pending: 0xffffff,
+      lane: 0xffffff,
+    },
+    label: { font: "bold 13px system-ui, sans-serif", risk: "bold 10px system-ui, sans-serif" },
+    tooltip: { font: "12px system-ui, sans-serif", padding: 5 },
+  },
+  // Incident and tow markers in the world
+  world: { hazard: 0xff8a1f, tow: 0xf2c744, cash: "#7dffa0", cashBig: "#ffe27a" },
   thresholds: { warn: 0.6, bad: 0.85 }, // meter fractions where bars turn amber / red
 };
 

@@ -1,15 +1,9 @@
 {
   "schemaVersion": 2,
   "levels": [
-    {
-      "id": "network_02",
-      "name": "City Grid",
-      "file": "network-02.json"
-    },
-    {
-      "id": "network_01",
-      "name": "Pressure Test",
-      "file": "network-01.json"
-    }
+    { "id": "first_junction", "name": "First Junction", "file": "first-junction.json" },
+    { "id": "network_01", "name": "Turning Traffic", "file": "network-01.json" },
+    { "id": "network_03", "name": "Connected Junctions", "file": "network-03.json" },
+    { "id": "network_02", "name": "City Grid", "file": "network-02.json" }
   ]
 }

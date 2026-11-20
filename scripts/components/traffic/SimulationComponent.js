@@ -9,7 +9,7 @@ export class SimulationComponent {
     this.tick = 0;
     this.paused = false;
     this.speed = 1;
-    this.status = "running"; // running | gridlock
+    this.status = "running"; // running | gridlock | complete
     this.gridlockGate = null; // input gate entity that tipped the level into gridlock
     this.gridlockTime = null;
     this.rng = { seed: data.seed >>> 0 };
@@ -23,6 +23,10 @@ export class SimulationComponent {
     this.incidents = data.incidents; // { enabled, duration }
     this.gridlock = data.gridlock; // { fullSeconds }
     this.scoring = data.scoring; // { perVehicle, perIncident }
+    this.economy = data.economy; // { perVehicle, startCash }
+    this.flow = data.flow; // see data/game-config.json
+    this.interventions = data.interventions; // { tow: { cost, costStep, cooldown, delay } }
+    this.goal = data.goal ?? null; // { surviveSeconds }: reaching it completes the level
     this.scheduledObstacles = data.scheduledObstacles ?? []; // level events, not yet fired
   }
 }

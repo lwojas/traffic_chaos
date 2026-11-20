@@ -29,6 +29,14 @@ export class TrafficStatsComponent {
     this.score = 0;
     this.blockedEntries = 0; // vehicles held at a green line with no room beyond
     this.blockedJunctionEvents = 0;
+    this.cash = 0; // spendable money: earned from traffic that actually got through
+    this.earned = 0; // total cash earned this run (never reduced by spending)
+    this.flowMultiplier = 1; // current chain multiplier
+    this.peakFlow = 1; // highest chain multiplier reached
+    this.releases = 0; // queues of at least minQueue released
+    this.cleanReleases = 0; // releases that cleared without breaking the chain
+    this.biggestRelease = 0;
+    this.towsUsed = 0;
     this.time = 0;
     this.completionTimes = []; // rolling window for throughput
     this.queueByLane = {};

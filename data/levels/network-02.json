@@ -18,26 +18,26 @@
     }
   },
   "demandCurves": {
-    "rush-hour": [
+    "shift": [
       {
         "time": 0,
+        "rate": 0.02
+      },
+      {
+        "time": 120,
         "rate": 0.04
       },
       {
-        "time": 90,
+        "time": 300,
+        "rate": 0.06
+      },
+      {
+        "time": 480,
         "rate": 0.08
       },
       {
-        "time": 180,
-        "rate": 0.12
-      },
-      {
-        "time": 300,
-        "rate": 0.17
-      },
-      {
-        "time": 420,
-        "rate": 0.22
+        "time": 660,
+        "rate": 0.1
       }
     ]
   },
@@ -45,7 +45,7 @@
     "fullSeconds": 8
   },
   "incidents": {
-    "duration": 15
+    "duration": 16
   },
   "scoring": {
     "perVehicle": 1,
@@ -907,7 +907,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -933,7 +933,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -959,7 +959,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -985,7 +985,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -1011,7 +1011,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -1037,7 +1037,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -1063,7 +1063,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -1089,7 +1089,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -1115,7 +1115,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -1141,7 +1141,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -2540,5 +2540,36 @@
     "preset": "day",
     "enabled": false,
     "quality": "low"
+  },
+  "progression": {
+    "order": 4,
+    "blurb": "A 3x2 grid with many gates. Something is always going wrong somewhere else.",
+    "teaches": [
+      "scanning",
+      "triage"
+    ],
+    "unlock": {
+      "after": "network_03",
+      "medal": "bronze"
+    }
+  },
+  "goal": {
+    "surviveSeconds": 900
+  },
+  "ratings": {
+    "bronze": {
+      "time": 420
+    },
+    "silver": {
+      "time": 660,
+      "earned": 8000,
+      "flow": 2
+    },
+    "gold": {
+      "time": 900,
+      "earned": 16000,
+      "flow": 3,
+      "maxIncidents": 4
+    }
   }
 }

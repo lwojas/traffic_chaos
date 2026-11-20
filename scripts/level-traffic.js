@@ -6,6 +6,7 @@ import { GameActions } from "./traffic/ui/GameActions.js";
 import { GameHud } from "./traffic/ui/hud/GameHud.js";
 import { ViewportInput } from "./traffic/ui/ViewportInput.js";
 import { ViewCamera } from "./traffic/view/ViewCamera.js";
+import { Progression } from "./traffic/progress/Progression.js";
 import { LocalJsonProvider } from "./services/data/LocalJsonProvider.js";
 import { DEBUG_LAYERS } from "./traffic/presentation/TrafficDebugView.js";
 
@@ -22,14 +23,21 @@ export class TrafficLevel {
     const debugFlags = { enabled: false, layers: Object.fromEntries(DEBUG_LAYERS.map((n) => [n, !quiet.includes(n)])) };
     this.debug = new DebugMode(debugFlags);
     const provider = new LocalJsonProvider({ baseUrl: new URLSearchParams(location.search).get("data") ?? "data" });
+    let storage = null;
+    try {
+      storage = window.localStorage; // medals and unlocks persist per browser; absent storage just means no saving
+    } catch {
+      /* blocked */
+    }
     this.app = new TrafficGame({
       provider,
+      progression: new Progression(storage),
       hooks: {
         attachPresentation: (session) => {
           const map = session.level.map;
           const camera = new ViewCamera({ world: { w: map.width, h: map.height }, viewport: { w: game.camera.width, h: game.camera.height } });
           const first = session.level.junctions[0].bounds;
-          camera.centerOn(first.x + first.w / 2, first.y + first.h / 2); // open on the first junction
+          camera.centerOn(first.x + first.w / 2, first.y + first.h / 2); // open on the first junction (a small map just fits)
           return new TrafficPresentation(session, { debugFlags, camera, actions: this.actions });
         },
         onLevelLaunched: (session) => {

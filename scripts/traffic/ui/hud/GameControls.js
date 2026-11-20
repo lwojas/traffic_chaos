@@ -2,7 +2,7 @@ import { el } from "../dom.js";
 
 // Pause, speed, restart and the debug-mode switch. Pure buttons over GameActions.
 export class GameControls {
-  constructor(parent, actions) {
+  constructor(parent, actions, onMaps = () => {}) {
     this.actions = actions;
     this.root = el("div", "hud-panel hud-controls");
     this.pause = this.button("Pause", "Pause / resume (Space)", () => actions.togglePause());
@@ -11,6 +11,7 @@ export class GameControls {
       b.dataset.speed = x;
       return b;
     });
+    this.button("Maps", "Choose a map", onMaps);
     this.button("Restart", "Restart level (R)", () => actions.restart());
     this.debugButton = this.button("Debug", "Debug panel and overlay (D)", () => actions.toggleDebug());
     parent.append(this.root);

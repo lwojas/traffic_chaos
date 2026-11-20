@@ -1,12 +1,15 @@
 {
   "schemaVersion": 2,
-  "startLevel": "network_02",
+  "startLevel": "first_junction",
   "simulation": {
     "tickRate": 30,
     "speeds": [1, 2, 4],
     "incidents": { "enabled": true, "duration": 15 },
     "gridlock": { "fullSeconds": 6 },
-    "scoring": { "perVehicle": 1, "perIncident": 5 }
+    "scoring": { "perVehicle": 1, "perIncident": 5 },
+    "economy": { "perVehicle": 10, "startCash": 150 },
+    "flow": { "minQueue": 3, "burstMax": 2, "chainFill": 0.5, "steps": [1, 2, 3, 5, 8], "chainSeconds": 30, "cleanRatio": 0.75, "releaseTimeout": 45, "riskBands": [0.35, 0.6, 0.85] },
+    "interventions": { "tow": { "cost": 100, "costStep": 50, "cooldown": 20, "delay": 3 } }
   },
   "vehicleTypes": {
     "car":   { "typeId": "car",   "length": 34, "width": 16, "maxSpeed": 120, "accel": 70,  "decel": 90,  "reactionTime": 0.5, "minGap": 7, "patience": 12, "color": "#4aa3df" },

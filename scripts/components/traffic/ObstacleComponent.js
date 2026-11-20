@@ -16,6 +16,7 @@ export class ObstacleComponent {
     this.vehicles = data.vehicles ?? [];
     this.zone = data.zone ?? null; // collision: the conflict zone it happened in
     this.createdAt = data.createdAt ?? 0;
+    this.towed = false; // a tow truck has been called: remaining time is the truck's ETA
     this.active = false; // set by ObstacleSystem once its blockers are registered
   }
 }

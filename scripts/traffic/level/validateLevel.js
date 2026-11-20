@@ -7,6 +7,9 @@ export const LEVEL_SCHEMA_VERSION = 2;
 const TURNS = ["left", "straight", "right", "uturn"];
 const LANE_KINDS = ["approach", "exit"];
 const LIGHT_QUALITY = ["low", "medium", "high"];
+export const MEDALS = ["bronze", "silver", "gold"];
+// time: seconds survived, earned: cash earned, flow: peak chain multiplier, maxIncidents: at most this many
+export const RATING_KEYS = ["time", "earned", "flow", "maxIncidents"];
 
 export class LevelValidationError extends Error {
   constructor(levelId, errors) {
@@ -247,6 +250,25 @@ export function validateLevel(level, options = {}) {
   optNum("incidents.duration", level.incidents?.duration, 0.001);
   optNum("scoring.perVehicle", level.scoring?.perVehicle);
   optNum("scoring.perIncident", level.scoring?.perIncident);
+  for (const key of ["economy", "flow", "interventions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
+  optNum("economy.perVehicle", level.economy?.perVehicle);
+  optNum("economy.startCash", level.economy?.startCash);
+  optNum("flow.minQueue", level.flow?.minQueue);
+  optNum("flow.burstMax", level.flow?.burstMax);
+  optNum("flow.chainSeconds", level.flow?.chainSeconds, 0.001);
+  if (level.flow?.steps !== undefined && !(Array.isArray(level.flow.steps) && level.flow.steps.length > 0 && level.flow.steps.every((n) => isNum(n) && n >= 1))) err("flow.steps", "must be a non-empty array of numbers >= 1");
+  if (isObject(level.interventions)) for (const [id, cfg] of Object.entries(level.interventions)) for (const [k, v] of Object.entries(cfg ?? {})) optNum(`interventions.${id}.${k}`, v);
+  optNum("goal.surviveSeconds", level.goal?.surviveSeconds, 1);
+  if (isObject(level.ratings))
+    for (const [medal, req] of Object.entries(level.ratings)) {
+      if (!MEDALS.includes(medal)) err(`ratings.${medal}`, `must be one of ${MEDALS.join(", ")}`);
+      else if (!isObject(req)) err(`ratings.${medal}`, "must be an object of requirements");
+      else for (const [k, v] of Object.entries(req)) if (!RATING_KEYS.includes(k)) err(`ratings.${medal}.${k}`, `unknown requirement (use ${RATING_KEYS.join(", ")})`); else optNum(`ratings.${medal}.${k}`, v);
+    }
+  if (isObject(level.progression)) {
+    const u = level.progression.unlock;
+    if (u !== undefined && !(isObject(u) && isStr(u.after) && (u.medal === undefined || MEDALS.includes(u.medal)))) err("progression.unlock", "must be { after: levelId, medal?: bronze|silver|gold }");
+  }
   if (level.lighting !== undefined) {
     const l = level.lighting;
     if (!isObject(l)) err("lighting", "must be an object");

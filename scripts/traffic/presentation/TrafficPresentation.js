@@ -6,6 +6,8 @@ import { TrafficDebugView } from "./TrafficDebugView.js";
 import { PALETTE, hex } from "./colors.js";
 import { pointAt } from "../util/geometry.js";
 import { SignalControlLayer } from "./SignalControlLayer.js";
+import { TrafficEvents } from "../TrafficEvents.js";
+import { UI } from "../ui/theme.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
 
@@ -58,9 +60,29 @@ export class TrafficPresentation {
     this.worldUi = new SignalControlLayer({
       level: session.level,
       groups: new Map(this.groups.map((e) => [e.id, e.components.SignalGroupComponent])),
+      flow: session.flow,
       layer: spriteLayers.fg5,
       onToggle: (groupId) => actions.toggleSignal(groupId),
       isPending: (groupId) => actions.isSignalPending(groupId),
+    });
+
+    // Floating payout / event text. Events are only read: nothing here writes to the simulation.
+    this.floats = [];
+    this.base = session.sim.economy.perVehicle;
+    this.towDelay = session.sim.interventions.tow?.delay ?? 3;
+    const events = session.events;
+    events.on(TrafficEvents.CASH_EARNED, (vehicle, amount) => {
+      if (amount <= this.base * 1.3) return; // only released queues are worth a popup
+      const p = vehicle.components.Position;
+      this.float(`+$${amount}`, p.x, p.y - 14, amount >= this.base * 5 ? UI.world.cashBig : UI.world.cash, amount >= this.base * 5 ? "bold 20px system-ui" : "bold 15px system-ui");
+    });
+    events.on(TrafficEvents.FLOW_RELEASE, (stream, release, clean) => {
+      pointAt(stream.lane.path, stream.lane.stopLineS, _p);
+      this.float(clean ? `CLEAN RELEASE  +$${release.paid}` : "POOR RELEASE", _p.x, _p.y - 40, clean ? UI.world.cashBig : "#ff8a8a", "bold 18px system-ui", 2.2);
+    });
+    events.on(TrafficEvents.FLOW_BROKEN, (reason) => {
+      const c = session.level.junctions[0].bounds;
+      this.float(reason === "timeout" ? "FLOW FADING" : "FLOW BROKEN", c.x + c.w / 2, c.y - 30, "#ff8a8a", "bold 18px system-ui", 1.6);
     });
 
     this.debugSystem = new DebugSystem({ testSprite: false });
@@ -152,10 +174,32 @@ export class TrafficPresentation {
     }
   }
 
+  float(text, x, y, fill, font, life = 1.4) {
+    const t = game.add.text(x, y, text, { font, fill, stroke: "#10131a", strokeThickness: 4 });
+    t.anchor.setTo(0.5, 1);
+    spriteLayers.fg5.add(t);
+    this.floats.push({ t, y0: y, born: game.time.now, life: life * 1000 });
+  }
+
+  syncFloats() {
+    const now = game.time.now;
+    for (let i = this.floats.length - 1; i >= 0; i--) {
+      const f = this.floats[i];
+      const k = (now - f.born) / f.life;
+      if (k >= 1) {
+        f.t.destroy();
+        this.floats.splice(i, 1);
+      } else {
+        f.t.y = f.y0 - k * 36;
+        f.t.alpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+      }
+    }
+  }
+
   update() {
     this.syncCamera();
+    this.syncFloats();
     this.worldUi.update();
-    this.worldUi.refreshTooltip();
     this.syncLights();
     this.syncVehicles();
     this.syncObstacles();
@@ -198,10 +242,16 @@ export class TrafficPresentation {
       if (!o.active) continue;
       g.lineStyle(6, PALETTE.hazard, pulse);
       for (const b of o.blocks) this.line(g, b.lane.components.LaneComponent, b.rear, 11);
-      g.lineStyle(2, PALETTE.hazard, pulse);
+      g.lineStyle(2, o.towed ? UI.world.tow : PALETTE.hazard, pulse);
       for (const v of o.vehicles) {
         const p = v.components.Position;
         g.drawCircle(p.x, p.y, 44);
+        if (o.towed) {
+          // Tow truck on its way: a yellow bar that shrinks as the wreck clears
+          g.lineStyle(4, UI.world.tow, 1);
+          g.moveTo(p.x - 22, p.y - 30);
+          g.lineTo(p.x - 22 + 44 * Math.min(1, o.remaining / this.towDelay), p.y - 30);
+        }
       }
     }
   }
@@ -246,6 +296,7 @@ export class TrafficPresentation {
   destroy() {
     this.pointerBinding.detach();
     this.worldUi.destroy();
+    for (const f of this.floats) f.t.destroy();
     this.textures.destroy();
     game.world.removeAll(true);
   }

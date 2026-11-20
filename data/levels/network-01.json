@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "network_01",
-  "name": "Pressure Test",
+  "name": "Turning Traffic",
   "map": {
     "width": 1280,
     "height": 720,
@@ -18,38 +18,34 @@
     }
   },
   "demandCurves": {
-    "rush-hour": [
+    "shift": [
       {
         "time": 0,
-        "rate": 0.1
-      },
-      {
-        "time": 60,
-        "rate": 0.25
+        "rate": 0.04
       },
       {
         "time": 120,
-        "rate": 0.4
-      },
-      {
-        "time": 180,
-        "rate": 0.52
-      },
-      {
-        "time": 240,
-        "rate": 0.64
+        "rate": 0.09
       },
       {
         "time": 300,
-        "rate": 0.76
+        "rate": 0.16
+      },
+      {
+        "time": 480,
+        "rate": 0.23
+      },
+      {
+        "time": 660,
+        "rate": 0.36
       }
     ]
   },
   "gridlock": {
-    "fullSeconds": 6
+    "fullSeconds": 8
   },
   "incidents": {
-    "duration": 15
+    "duration": 16
   },
   "scoring": {
     "perVehicle": 1,
@@ -305,7 +301,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -327,7 +323,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -349,7 +345,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -371,7 +367,7 @@
       ],
       "queueCapacity": 12,
       "demand": {
-        "curve": "rush-hour"
+        "curve": "shift"
       },
       "routes": [
         {
@@ -719,5 +715,36 @@
     "preset": "day",
     "enabled": false,
     "quality": "low"
+  },
+  "progression": {
+    "order": 2,
+    "blurb": "Four arms, separate turn signals. Straight and turning cars share a crossing.",
+    "teaches": [
+      "turns",
+      "shared lanes"
+    ],
+    "unlock": {
+      "after": "first_junction",
+      "medal": "bronze"
+    }
+  },
+  "goal": {
+    "surviveSeconds": 720
+  },
+  "ratings": {
+    "bronze": {
+      "time": 360
+    },
+    "silver": {
+      "time": 540,
+      "earned": 6000,
+      "flow": 3
+    },
+    "gold": {
+      "time": 720,
+      "earned": 12000,
+      "flow": 5,
+      "maxIncidents": 3
+    }
   }
 }

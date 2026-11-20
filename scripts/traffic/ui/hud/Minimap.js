@@ -27,6 +27,7 @@ export class Minimap {
     this.drawnModel = null;
     this.drawnVersion = -1;
     this.drawnKey = "";
+    this.animating = false;
     this.layout();
 
     const aim = (e, glide) => {
@@ -101,7 +102,7 @@ export class Minimap {
   update(model) {
     this.model = model ?? this.model;
     this.layout();
-    if (this.camera.version === this.drawnVersion && this.model === this.drawnModel) return;
+    if (!this.animating && this.camera.version === this.drawnVersion && this.model === this.drawnModel) return;
     this.drawnVersion = this.camera.version;
     this.drawnModel = this.model;
     this.draw();
@@ -115,13 +116,71 @@ export class Minimap {
     c.drawImage(this.staticLayer, 0, 0);
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     const m = this.model;
+    this.animating = false;
     if (m) {
+      const time = performance.now() / 1000;
+      tf.viewRect(this.camera, _r);
+      const inView = (x, y) => {
+        tf.worldToMap(x, y, _p);
+        return _p.x >= _r.x && _p.x <= _r.x + _r.w && _p.y >= _r.y && _p.y <= _r.y + _r.h;
+      };
+      // Queue density: a strip along each loaded approach lane, from its stop line back to the queue tail
+      c.lineCap = "round";
+      for (const s of m.streams) {
+        if (s.queue < 1) continue;
+        const color = t.risk[s.risk];
+        tf.worldToMap(s.x, s.y, _p);
+        const sx = _p.x;
+        const sy = _p.y;
+        tf.worldToMap(s.tx, s.ty, _p);
+        c.strokeStyle = color;
+        c.lineWidth = 3 + s.risk;
+        c.beginPath();
+        c.moveTo(sx, sy);
+        c.lineTo(_p.x, _p.y);
+        c.stroke();
+      }
+      c.lineCap = "butt";
+      // Pressure markers at the stop line: grow and pulse with risk. A pulse away from the view is an alarm.
+      let alarm = false;
+      for (const s of m.streams) {
+        if (s.risk < 1 && !s.blocked) continue;
+        const hot = s.risk >= 2 || s.blocked;
+        tf.worldToMap(s.x, s.y, _p);
+        const color = t.risk[s.blocked ? 3 : s.risk];
+        const away = hot && !inView(s.x, s.y);
+        if (away) alarm = true;
+        const k = hot ? 0.5 + 0.5 * Math.sin(time * (s.risk >= 3 ? 9 : 5)) : 0;
+        if (hot) this.animating = true;
+        c.fillStyle = color;
+        c.beginPath();
+        c.arc(_p.x, _p.y, 3 + s.risk * 1.2, 0, Math.PI * 2);
+        c.fill();
+        if (hot) {
+          c.strokeStyle = color;
+          c.globalAlpha = 1 - k * 0.7;
+          c.lineWidth = away ? 2.5 : 1.5;
+          c.beginPath();
+          c.arc(_p.x, _p.y, 6 + s.risk * 2 + k * (away ? 8 : 4), 0, Math.PI * 2);
+          c.stroke();
+          c.globalAlpha = 1;
+        }
+      }
       for (const g of this.gates) {
         const info = m.gates.find((x) => x.id === g.id);
+        if (!info || info.fill < 0.5) continue; // gate pressure: only when the off-map queue is filling
         tf.worldToMap(g.x, g.y, _p);
-        c.fillStyle = info ? dangerColor(info.fill) : t.input;
+        c.strokeStyle = dangerColor(info.fill);
+        c.lineWidth = 2;
         c.beginPath();
-        c.arc(_p.x, _p.y, 4, 0, Math.PI * 2);
+        c.arc(_p.x, _p.y, 5.5, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.fillStyle = t.input;
+      for (const g of this.gates) {
+        tf.worldToMap(g.x, g.y, _p);
+        c.beginPath();
+        c.arc(_p.x, _p.y, 2, 0, Math.PI * 2);
         c.fill();
       }
       c.strokeStyle = t.output;
@@ -129,19 +188,36 @@ export class Minimap {
       for (const g of this.outputs) {
         tf.worldToMap(g.x, g.y, _p);
         c.beginPath();
-        c.arc(_p.x, _p.y, 3.5, 0, Math.PI * 2);
+        c.arc(_p.x, _p.y, 3, 0, Math.PI * 2);
         c.stroke();
       }
-      c.strokeStyle = t.incident;
-      c.lineWidth = 2.5;
+      // Incidents: a pulsing cross with a ring, always on top
       for (const i of m.incidents) {
+        this.animating = true;
         tf.worldToMap(i.x, i.y, _p);
+        const k = 0.5 + 0.5 * Math.sin(time * 6);
+        c.strokeStyle = t.incident;
+        c.globalAlpha = 1 - k * 0.6;
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(_p.x, _p.y, 7 + k * 5, 0, Math.PI * 2);
+        c.stroke();
+        c.globalAlpha = 1;
+        c.lineWidth = 2.5;
         c.beginPath();
         c.moveTo(_p.x - 4, _p.y - 4);
         c.lineTo(_p.x + 4, _p.y + 4);
         c.moveTo(_p.x + 4, _p.y - 4);
         c.lineTo(_p.x - 4, _p.y + 4);
         c.stroke();
+      }
+      // A remote alarm also pulses the minimap frame, so a glance is enough
+      if (alarm) {
+        c.strokeStyle = t.risk[3];
+        c.globalAlpha = 0.35 + 0.5 * (0.5 + 0.5 * Math.sin(time * 7));
+        c.lineWidth = 3;
+        c.strokeRect(1.5, 1.5, this.size.w - 3, this.size.h - 3);
+        c.globalAlpha = 1;
       }
     }
     tf.viewRect(this.camera, _r);

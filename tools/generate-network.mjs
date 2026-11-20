@@ -6,6 +6,7 @@
 //   lane 0 = straight, lane 1 = turn (right). Conflicts are NOT written here:
 //   they are derived from the movement paths when the level loads.
 import { writeFileSync } from "node:fs";
+import { applyMeta } from "./levelMeta.mjs";
 
 const W = 1280, H = 720, CX = 640, CY = 360, HALF = 40;
 
@@ -103,5 +104,5 @@ const level = {
   lighting: { preset: "day", enabled: false, quality: "low" },
 };
 
-writeFileSync(new URL("../data/levels/network-01.json", import.meta.url), JSON.stringify(level, null, 2) + "\n");
+writeFileSync(new URL("../data/levels/network-01.json", import.meta.url), JSON.stringify(applyMeta(level), null, 2) + "\n");
 console.log("wrote data/levels/network-01.json");

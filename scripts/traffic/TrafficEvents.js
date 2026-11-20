@@ -10,5 +10,9 @@ export const TrafficEvents = {
   OBSTACLE_STARTED: "G_TRAFFIC_OBSTACLE_STARTED", // (obstacleEntity)
   OBSTACLE_CLEARED: "G_TRAFFIC_OBSTACLE_CLEARED", // (obstacleEntity)
   JUNCTION_BLOCKED: "G_TRAFFIC_JUNCTION_BLOCKED", // (junctionEntity)
+  CASH_EARNED: "G_TRAFFIC_CASH_EARNED", // (vehicleEntity, amount, release | null)
+  FLOW_RELEASE: "G_TRAFFIC_FLOW_RELEASE", // (stream, release, clean: boolean) a held queue finished clearing
+  FLOW_BROKEN: "G_TRAFFIC_FLOW_BROKEN", // (reason: "incident" | "poor-release" | "gridlock" | "timeout")
+  TOW_CALLED: "G_TRAFFIC_TOW_CALLED", // (obstacleEntity, cost)
   GRIDLOCK: "G_TRAFFIC_GRIDLOCK", // (inputGateEntity) level failed
 };

@@ -5,7 +5,7 @@ import { TrafficGame } from "../scripts/traffic/TrafficGame.js";
 import { RemoteDataProvider } from "../scripts/services/data/RemoteDataProvider.js";
 import { LocalJsonProvider } from "../scripts/services/data/LocalJsonProvider.js";
 import { LevelValidationError } from "../scripts/traffic/level/validateLevel.js";
-import { memoryProvider, level01, clone, gameConfig, setGroups, GROUPS } from "./helpers/fixtures.js";
+import { memoryProvider, firstJunction, level01, clone, gameConfig, setGroups, GROUPS } from "./helpers/fixtures.js";
 
 // A second level for tests that switch levels: same data under another id
 const level02 = { ...clone(level01), id: "network_02", name: "Second Network" };
@@ -149,10 +149,11 @@ test("local provider resolves files via the manifest", async () => {
 });
 
 test("launching with no id (first launch) uses the configured start level, even before boot", async () => {
-  const game = makeGame();
+  const withStart = () => makeGame(memoryProvider([firstJunction, level01]));
+  const game = withStart();
   const s = await game.launchLevel();
   assert.equal(s.level.id, gameConfig.startLevel);
-  const fresh = makeGame();
+  const fresh = withStart();
   const r = await fresh.restartLevel(); // restart before any launch must not pass a null id
   assert.equal(r.level.id, gameConfig.startLevel);
 });

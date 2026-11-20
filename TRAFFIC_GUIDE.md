@@ -5,7 +5,9 @@ Read this before changing anything under `scripts/traffic/`, `scripts/system/tra
 ## Design rules (do not break these)
 
 1. **The player causes failure.** Vehicles are simple agents. Do not add conflict avoidance, junction reservations, rerouting, or anything that makes bad signal choices safe. If you add driver behaviour, ask: does this stop the player's mistake from having consequences? If so, it does not belong.
-2. **Failure is capacity collapse**, not money. A full input queue for `gridlock.fullSeconds` ends the level. Score is secondary.
+2. **Failure is capacity collapse**, not money. A full input queue for `gridlock.fullSeconds` ends the level. Cash is a tool for recovering, never a way to lose.
+6. **Reward is traffic that got through.** Cash is paid per vehicle on reaching an output gate (`FlowSystem`). Never pay for queue length, never pay for gridlock. Holding traffic is a gamble: the payout grows with the held queue, and so does the risk.
+7. **Interventions edit state, not cars.** The tow truck shortens an obstacle timer. Do not give vehicles new behaviour to support an intervention.
 3. **Determinism.** Same level + seed + signal commands = same result. Use `nextRandom(state)` from `traffic/util/rng.js` with a seeded state; never `Math.random()` or wall-clock time in simulation code.
 4. **Three layers, no leaking.** Level topology (JSON, compile) -> runtime simulation (ECS, `TrafficSession`, no Phaser) -> presentation (Phaser, HUD, debug view; reads the world, never writes it). Tests run the simulation without Phaser.
 5. **Level ids are not runtime ids.** JSON ids become `Entity.id`; runtime identity is the Entity object / `tempId`.
@@ -21,6 +23,7 @@ Read this before changing anything under `scripts/traffic/`, `scripts/system/tra
 | Lifecycle (load/restart/unload) | `scripts/traffic/TrafficGame.js` |
 | Components (data only) | `scripts/components/traffic/`, registered in `index.js` |
 | Systems | `scripts/system/traffic/` |
+| Flow, cash, tow, ratings, unlocks | `system/traffic/FlowSystem.js`, `InterventionSystem.js`, `ShiftSystem.js`, `util/flowMath.js`, `progress/` |
 | Phaser view, world-space UI, debug overlay | `scripts/traffic/presentation/` |
 | Camera, minimap maths, HUD read model, control layout (pure, no Phaser/DOM) | `scripts/traffic/view/` |
 | Player HUD, input routing, debug panel (DOM) | `scripts/traffic/ui/` |
@@ -33,13 +36,16 @@ Defined in `TrafficSession`'s constructor. Each step only reads what earlier ste
 1. `TrafficDemandSystem`: demand curve -> arrivals into input queues (or overflow)
 2. `VehicleSpawnSystem`: queue heads enter their lane if there is room
 3. `TrafficSignalSystem`: player commands -> signal group states
-4. `VehicleSystem`: car following, stop-line decisions, movement along paths
-5. `JunctionConflictSystem`: two active vehicles in both sides of a conflict zone -> incident + obstacle
-6. `ObstacleSystem`: activate, count down, clear obstacles (blocks act as stopped leaders)
-7. `JunctionSystem`: box occupancy
-8. `OutputGateSystem`: arrived vehicles leave, throughput++
-9. `TrafficStatsSystem`: queues, capacity, load, score
-10. `GridlockSystem`: full-queue timer, sets `sim.status = "gridlock"` (the session then stops ticking)
+4. `InterventionSystem`: `intervention.*` commands (tow truck): spend cash, edit obstacle timers
+5. `VehicleSystem`: car following, stop-line decisions, movement along paths
+6. `JunctionConflictSystem`: two active vehicles in both sides of a conflict zone -> incident + obstacle
+7. `ObstacleSystem`: activate, count down, clear obstacles (blocks act as stopped leaders)
+8. `JunctionSystem`: box occupancy
+9. `OutputGateSystem`: arrived vehicles leave, throughput++ (emits `VEHICLE_COMPLETED`)
+10. `FlowSystem`: streams, releases, per-car cash, Flow chain
+11. `TrafficStatsSystem`: queues, capacity, load, score
+12. `GridlockSystem`: full-queue timer, sets `sim.status = "gridlock"` (the session then stops ticking)
+13. `ShiftSystem`: `goal.surviveSeconds` reached -> `sim.status = "complete"`
 
 Add a new system by constructing it in that list at the point where its inputs exist. Changing the order changes gameplay; add a test.
 
@@ -68,6 +74,18 @@ ViewCamera (view/) <- ViewportInput (ui/) <- pointer/keys;  Minimap and edge scr
 - **Minimap.** Draws level topology (roads, junctions) plus gate pressure, incidents and the view rectangle. It does not render the world. Click or drag calls `camera.glideTo` / `centerOn`.
 - **Debug mode.** `DebugMode` is the shared switch (panel + overlay). Pause, restart, speed and `D` keys live in `GameHud`; the panel keeps `.` (step) and `1-9` (signal groups). The overlay bitmap is viewport-sized and screen-fixed, so `TrafficDebugView` translates by the camera.
 
+## Gameplay loop: Flow, cash, tow, medals
+
+**Manage -> Accumulate -> Risk -> Release -> Reward.**
+
+- **Stream** = one (signal group, approach lane). Its id is `groupId@laneId`, the same id as its world control. `session.flow.streams` exposes `queue`, `pressure`, `risk` (0 SAFE .. 3 CRITICAL), `multiplier`, `potential`, `blocked`.
+- **Pressure** = (cars waiting + this lane's share of the input queue) / (lane capacity + that share's capacity). Lane capacity comes from lane length and the vehicle mix (`laneCapacity`), so risk and bonus scale with real topology. Bands are `flow.riskBands`.
+- **Release**: group turns green with at least `flow.minQueue` cars stopped for it. Each car pays `economy.perVehicle x burst x chain` when it reaches an output gate. Cars lost to a crash pay nothing. `burst = 1 + burstMax x (size/capacity)^1.3`.
+- **Chain** (`flow.steps`, e.g. x1 x2 x3 x5 x8): a clean release of at least `chainFill` of the lane advances it. An incident or a full input queue resets it; a poor release or `chainSeconds` of idling drops one step. The chain only multiplies released queues, so a stream that is never held earns the plain rate.
+- **Tow**: command `session.intervene("tow", obstacleId)` -> `InterventionSystem`. Cost `cost + costStep x uses`, then `cooldown`; the obstacle clears `delay` seconds later. Add an intervention by adding a handler in `InterventionSystem.handlers` and a config entry under `interventions`.
+- **Ratings/unlocks**: `progress/rating.js` (`rateRun`, pure) and `progress/Progression.js` (medals + unlock rules over an injected storage). Level JSON holds `goal`, `ratings` (bronze/silver/gold requirements: `time`, `earned`, `flow`, `maxIncidents`) and `progression` (`order`, `blurb`, `unlock: {after, medal}`). `TrafficGame.finishRun` rates a finished run once and calls `hooks.onLevelFinished`.
+- **Config merge**: `game-config.json` `simulation.{economy,flow,interventions}` are defaults; a level may override any key (`economy`, `flow`, `interventions.tow.cost`...).
+
 ## Concepts
 
 - **Signal group**: independently controllable stream of movements. Commands: `{type:"signal.set", group, green}` / `{type:"signal.toggle", group}` via `session.setSignal` / `toggleSignal`. Green is instant, red goes through yellow. No interlock by design.
@@ -78,12 +96,14 @@ ViewCamera (view/) <- ViewportInput (ui/) <- pointer/keys;  Minimap and edge scr
 
 ## Common tasks
 
-- **New level**: copy a shipped level (`network-01.json` single junction; `network-02.json` 3x2 grid on a 3400x1700 map, generated by `tools/generate-grid-network.mjs`) or adapt a generator, add it to `data/levels/manifest.json`, run `npm test` (the validator reports exact paths). Check zones with the debug overlay (`D`, layer `conflicts`).
+- **Shipped maps (in order)**: `first_junction` (teaching: 2 in, 2 out, straight only; `tools/generate-first-junction.mjs`), `network_01` Turning Traffic (4 arms), `network_03` Connected Junctions (`generate-grid-network.mjs connected`), `network_02` City Grid. Progression, goals, ratings and demand curves for the generated ones live in `tools/levelMeta.mjs`.
+- **New level**: copy a shipped level or adapt a generator, add it to `data/levels/manifest.json`, run `npm test` (the validator reports exact paths). Check zones with the debug overlay (`D`, layer `conflicts`).
 - **New level field**: add validation in `validateLevel.js`, consume it in `compileLevel`/`instantiateLevel`/`TrafficSession`, add a test in `tests/level.test.js`. Keep it JSON, editor-friendly and Phaser-free.
 - **New component**: class in `components/traffic/`, export in its `index.js`, add the entity type to `scripts/data/TrafficDefaults.js`.
 - **New HUD element**: add a widget in `ui/hud/`, construct it in `GameHud.bind`, feed it from `HudReadModel` (which reads stats/components). Take styling from `theme.js`.
 - **New debug layer**: add it to `DEBUG_LAYERS` in `TrafficDebugView.js`.
 - **New world-space UI**: lives in the Phaser world layer (so it moves with the camera), placed in world coordinates, hit-tested through the `pick/setHover/activate` interface that `ViewportInput` calls. Do not position it from screen coordinates.
+- **Pacing/balance**: `node tools/playtest.mjs [levelFile] [seeds]` plays a level with bots (idle, reckless, fixed-cycle, greedy, charger, +tow) and prints how each run ended, cash, Flow. `PHASES='[["sg_a"],["sg_b"]]'` sets which groups a bot opens together. Target for the first level: idle/reckless end under about 6 min, sensible play ends 9-12 min. Bots are not humans: confirm by hand.
 - **Tuning**: demand curves in the level JSON; incident duration, gridlock timer and scoring in `data/game-config.json` (levels can override). Re-run the strategy test in `tests/simulation.test.js` after tuning: bad strategies must still collapse well before a sensible one.
 
 ## Pitfalls
@@ -96,12 +116,14 @@ ViewCamera (view/) <- ViewportInput (ui/) <- pointer/keys;  Minimap and edge scr
 
 ## Testing
 
+Engine tests use frozen copies of the original levels in `tests/fixtures/` (retuning a shipped level does not move them). `tests/flow.test.js` covers Flow, cash and the tow truck; `tests/progress.test.js` covers ratings, unlocks, `TrafficGame.finishRun` and the shipped-level and pacing checks.
+
 UI logic that matters is kept pure so it is tested headless: `tests/camera.test.js` (camera, edge scroll, minimap transform), `tests/hud.test.js` (signal control layout, read model). The Phaser/DOM layer (`ViewportInput`, widgets, `SignalControlLayer`) has no automated test; check it in a browser.
 
 `npm test` (node's test runner, no Phaser). Helpers in `tests/helpers/fixtures.js`: `quietSession()` (no demand), `car(session, "n", "straight")`, `setGroups(session, ...)`, `runUntil`. Prefer simulation-level tests over UI tests. `node tools/bench.mjs [demandScale] [seconds]` gives a headless performance probe.
 
 ## Not implemented yet (known gaps)
 
-Left turns (schema supports `turn: "left"`; opposing lefts collide geometrically in a small box), obstacle types beyond collision/roadworks, visual polish of the HUD, controls and minimap (prototype styling), camera zoom, touch input, a browser-level smoke test of the Phaser presentation (the DOM/Phaser wiring is not covered by `npm test`; only the pure `view/` modules are).
+Maps 4-5 of the planned arc (a collision-focused "Incident Network" and a competing-sources "Multiple Inputs" map), levels 2-4 are only bot-tuned (not hand-playtested), road crew / emergency / capacity-boost interventions, and the new HUD, world controls and minimap markers have had no browser verification. Left turns (schema supports `turn: "left"`; opposing lefts collide geometrically in a small box), obstacle types beyond collision/roadworks, visual polish of the HUD, controls and minimap (prototype styling), camera zoom, touch input, a browser-level smoke test of the Phaser presentation (the DOM/Phaser wiring is not covered by `npm test`; only the pure `view/` modules are).
 
 `network_02` is the first multi-junction level: a lane between two junctions is both the exit of one and the approach of the next, and carries both its straight and right-turn movements, so a right-turner waiting on a red turn group can hold up traffic behind it.

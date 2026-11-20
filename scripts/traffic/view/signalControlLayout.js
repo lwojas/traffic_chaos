@@ -7,10 +7,20 @@ import { pointAt } from "../util/geometry.js";
 // to the light and the movement it governs. Controls on the same approach arm
 // are stacked back along the lane.
 //
-// Returns [{ id, groupId, laneId, junctionId, label, x, y, heading, turns }]
-//   heading  direction of travel on the approach lane (radians)
-//   turns    movement types this group makes from that lane ("straight", "right"...)
-export const DEFAULT_PLACEMENT = { size: 26, gap: 4, roadsideMargin: 6 };
+// Returns [{ id, groupId, laneId, junctionId, label, direction, x, y, heading, turns, routes, approach }]
+//   heading    direction of travel on the approach lane (radians)
+//   direction  plain-language heading of that travel ("Southbound")
+//   turns      movement types this group makes from that lane ("straight", "right"...)
+//   approach   the approach lane's polyline
+//   routes     polylines of every movement the control releases: approach + junction + exit lane
+// `id` is also the Flow stream id (see FlowSystem), so the world control and the
+// simulation's queue/reward numbers are looked up by the same key.
+export const DEFAULT_PLACEMENT = { size: 46, gap: 4, roadsideMargin: 4 };
+const COMPASS = ["Eastbound", "Southbound", "Westbound", "Northbound"]; // screen space: +y is south
+
+export function headingName(angle) {
+  return COMPASS[((Math.round(angle / (Math.PI / 2)) % 4) + 4) % 4];
+}
 
 export function computeSignalControls(level, compiled = compileLevel(level), options = {}) {
   const { size, gap, roadsideMargin } = { ...DEFAULT_PLACEMENT, ...options };
@@ -23,8 +33,9 @@ export function computeSignalControls(level, compiled = compileLevel(level), opt
   for (const c of compiled.connectors.values()) {
     const key = `${c.signalGroup}@${c.from}`;
     let pair = pairs.get(key);
-    if (!pair) pairs.set(key, (pair = { groupId: c.signalGroup, laneId: c.from, junctionId: c.junction, turns: [] }));
+    if (!pair) pairs.set(key, (pair = { groupId: c.signalGroup, laneId: c.from, junctionId: c.junction, turns: [], connectors: [] }));
     if (!pair.turns.includes(c.turn)) pair.turns.push(c.turn);
+    pair.connectors.push(c);
   }
 
   // Arms: approach lanes ending at the same stop line with the same heading
@@ -65,6 +76,9 @@ export function computeSignalControls(level, compiled = compileLevel(level), opt
         laneId: i.pair.laneId,
         junctionId: i.pair.junctionId,
         label: groups.get(i.pair.groupId)?.label ?? i.pair.groupId,
+        direction: headingName(i.angle),
+        approach: i.lane.points,
+        routes: i.pair.connectors.map((c) => joinPoints(i.lane.points, c.points, compiled.lanes.get(c.to).points)),
         x: i.x - hx * back + i.rx * outward,
         y: i.y - hy * back + i.ry * outward,
         heading: i.angle,
@@ -72,6 +86,12 @@ export function computeSignalControls(level, compiled = compileLevel(level), opt
       });
     });
   }
+  return out;
+}
+
+function joinPoints(...parts) {
+  const out = [];
+  for (const part of parts) for (const pt of part) if (!out.length || out[out.length - 1][0] !== pt[0] || out[out.length - 1][1] !== pt[1]) out.push(pt);
   return out;
 }
 

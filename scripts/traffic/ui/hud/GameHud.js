@@ -1,7 +1,9 @@
 import { el } from "../dom.js";
 import { applyTheme } from "../theme.js";
 import { HudReadModel } from "../../view/HudReadModel.js";
-import { ScoreDisplay } from "./ScoreDisplay.js";
+import { CashDisplay } from "./CashDisplay.js";
+import { TowPanel } from "./TowPanel.js";
+import { MapSelect } from "./MapSelect.js";
 import { GridlockDisplay } from "./GridlockDisplay.js";
 import { QueueStatus } from "./QueueStatus.js";
 import { IncidentStatus } from "./IncidentStatus.js";
@@ -11,7 +13,7 @@ import { StatusBanner } from "./StatusBanner.js";
 import { Minimap } from "./Minimap.js";
 
 const REFRESH_SECONDS = 0.1; // simulation values change per tick; the DOM refreshes at 10 Hz
-const HINT = "Click a signal control beside a stop line · drag, arrow keys or screen edges to scroll · Space pause · R restart";
+const HINT = "Hold traffic to build a queue, then click its control to RELEASE · T tow · drag or arrow keys to scroll · Space pause · R restart";
 
 // The player HUD: a set of independent widgets anchored to the corners of the
 // game viewport (CSS, so it follows resizes and is unrelated to world size).
@@ -42,15 +44,19 @@ export class GameHud {
     const center = zone("center");
 
     const first = this.model.read();
+    const maps = new MapSelect(center, this.actions);
+    const openMaps = () => maps.toggle();
+    this.tow = new TowPanel(topLeft, this.actions, camera);
     this.widgets = [
-      new ScoreDisplay(topLeft),
+      new CashDisplay(topLeft),
       new IncidentStatus(topLeft, camera),
+      this.tow,
       new QueueStatus(topLeft, first.gates, camera),
       new GridlockDisplay(topCenter),
       new StatusDisplay(topRight),
-      new GameControls(topRight, this.actions),
+      new GameControls(topRight, this.actions, openMaps),
       new Minimap(bottomRight, { level: session.level, camera, gates: this.model.inputGatePoints(), outputs: this.model.outputGatePoints() }),
-      new StatusBanner(center, this.actions),
+      new StatusBanner(center, this.actions, openMaps),
     ];
     bottomLeft.append(el("div", "hud-hint", HINT));
     this.minimap = this.widgets.find((w) => w instanceof Minimap);
@@ -84,6 +90,7 @@ export class GameHud {
       this.actions.togglePause();
     } else if (key === "r") this.actions.restart();
     else if (key === "d") this.actions.toggleDebug();
+    else if (key === "t") this.tow?.towWorst();
     else if (["q", "w", "e"].includes(key)) {
       const speed = this.actions.speeds[["q", "w", "e"].indexOf(key)];
       if (speed) this.actions.setSpeed(speed);
