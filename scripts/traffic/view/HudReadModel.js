@@ -2,6 +2,16 @@ import { pointAt } from "../util/geometry.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
 
+// How the network is holding up, as a word and a 0..3 band (same bands as Flow
+// risk). A label over two authoritative stats, not a second rule: the worse of
+// "fullest input queue" and "share of lanes lost to incidents".
+export const STABILITY = ["STABLE", "MODERATE", "STRAINED", "CRITICAL"];
+export function stabilityBand(gridlockRisk, capacity) {
+  const worst = Math.max(gridlockRisk, 1 - capacity);
+  const band = worst >= 0.85 ? 3 : worst >= 0.6 ? 2 : worst >= 0.3 ? 1 : 0;
+  return { band, label: STABILITY[band] };
+}
+
 // What the player-facing HUD and minimap show, read straight from the
 // simulation: the stats component for aggregates, ECS components for gates and
 // incidents. Nothing here is calculated a second time; the few derived values
@@ -50,10 +60,14 @@ export class HudReadModel {
       paused: sim.paused,
       speed: sim.speed,
       time: st.time,
+      goalSeconds: s.level.goal?.surviveSeconds ?? 0,
+      perVehicle: sim.economy.perVehicle,
       score: st.score,
       throughput: st.completed,
       throughputPerMin: st.throughputPerMin,
       capacity: st.networkCapacity,
+      load: st.networkLoad,
+      stability: stabilityBand(st.peakQueueFill, st.networkCapacity),
       gridlockRisk: st.peakQueueFill,
       gridlockProgress: st.gridlockProgress,
       gridlockSeconds: sim.gridlock.fullSeconds,
@@ -85,7 +99,7 @@ export class HudReadModel {
       const y = _p.y;
       const slot = s.lane.length / s.capacity;
       pointAt(s.lane.path, Math.max(0, s.lane.stopLineS - s.queue * slot), _p);
-      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked };
+      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked, multiplier: s.multiplier, potential: s.potential };
     });
   }
 

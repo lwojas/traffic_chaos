@@ -1,5 +1,5 @@
 import { drawSignalControl, drawRouteHighlight, drawLaneGauge } from "./signalControlSkin.js";
-import { UI } from "../ui/theme.js";
+import { UI, Theme, world, signalTokens, riskHex } from "../ui/theme.js";
 import { computeSignalControls } from "../view/signalControlLayout.js";
 import { buildPath, pointAt } from "../util/geometry.js";
 import { RISK_NAMES } from "../util/flowMath.js";
@@ -69,10 +69,26 @@ export class SignalControlLayer {
       layer.add(risk);
       this.labels.set(c, { label, risk });
     }
-    this.tip = game.add.text(0, 0, "", { font: style.tooltip.font, fill: "#ffffff", backgroundColor: "rgba(10,12,16,0.9)", align: "left" });
+    this.tip = game.add.text(0, 0, "", { font: style.tooltip.font, fill: "#ffffff", backgroundColor: "#000000", align: "left" });
     this.tip.anchor.setTo(0.5, 1);
     this.tip.visible = false;
     layer.add(this.tip);
+    this.themeId = null;
+    this.restyleText();
+  }
+
+  // Text colours follow the theme (checked each frame; cheap, changes rarely)
+  restyleText() {
+    this.themeId = Theme.id;
+    const w = world();
+    const sig = signalTokens();
+    for (const { label, risk } of this.labels.values()) {
+      label.fill = w.labelText;
+      label.stroke = w.labelStroke;
+      risk.stroke = w.labelStroke;
+    }
+    this.tip.fill = sig.tipText;
+    this.tip.backgroundColor = sig.tipBackground;
   }
 
   // Control under a world point, or null. Top-most (last drawn) wins.
@@ -96,19 +112,20 @@ export class SignalControlLayer {
 
   // Redraws every frame: the controls are few, and the pulse and chevrons animate.
   update() {
+    if (this.themeId !== Theme.id) this.restyleText();
     const time = game.time.now / 1000;
     const st = this.style;
     const gauge = this.gaugeGfx;
     gauge.clear();
     for (const lane of this.lanes.values()) {
       const worst = lane.streams.reduce((a, s) => (s.queue > a.queue ? s : a), lane.streams[0]);
-      if (worst.queue > 0) drawLaneGauge(gauge, lane, worst.queue * lane.slot, st.colors.risk[worst.risk]);
+      if (worst.queue > 0) drawLaneGauge(gauge, lane, worst.queue * lane.slot, riskHex(worst.risk));
     }
 
     const h = this.hovered;
     this.routeGfx.clear();
     if (h) {
-      const color = st.colors.light[h.group.state];
+      const color = world().light[h.group.state];
       for (const route of h.routeViews) drawRouteHighlight(this.routeGfx, route, color, time, st);
     }
 
@@ -137,7 +154,7 @@ export class SignalControlLayer {
     const warn = s.blocked ? "BLOCKED" : s.risk >= 2 ? RISK_NAMES[s.risk] : "";
     if (risk.text !== warn) {
       risk.text = warn;
-      risk.fill = s.risk >= 3 || s.blocked ? "#ff8a8a" : "#ffc07a";
+      risk.fill = s.risk >= 3 || s.blocked ? world().warnText : world().cashBig;
     }
     risk.x = c.x;
     risk.y = c.y - this.style.size / 2 - this.style.ring - this.style.lift - 14;

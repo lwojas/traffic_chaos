@@ -1,6 +1,7 @@
 import { el, Cell } from "../dom.js";
+import { icon } from "../icons.js";
 
-// The tow truck: one button per active incident, with its price. Spending is a
+// Incidents card (only while a crash is active) with the tow truck: one button per active incident, with its price. Spending is a
 // decision, so every button shows what it costs and why it may be unavailable.
 // Clicking calls actions.tow(id); `T` tows the incident that blocks the most.
 export class TowPanel {
@@ -8,8 +9,11 @@ export class TowPanel {
     this.actions = actions;
     this.camera = camera;
     this.root = el("div", "hud-panel hud-tow");
-    this.head = new Cell(el("div", "hud-label", "TOW TRUCK"));
-    this.root.append(this.head.node);
+    const head = el("div", "hud-label hud-tow-head");
+    head.append(icon("warning", 14));
+    this.head = new Cell(el("span", "", "INCIDENT"));
+    head.append(this.head.node);
+    this.root.append(head);
     this.list = el("div", "hud-tow-list");
     this.root.append(this.list);
     this.rows = new Map(); // incident id -> { row, button, text }
@@ -23,7 +27,7 @@ export class TowPanel {
     const list = m.incidents;
     this.root.hidden = list.length === 0;
     const tow = m.tow;
-    this.head.set(tow.ready ? `TOW TRUCK · $${tow.cost}` : `TOW TRUCK · back in ${Math.ceil(tow.cooldownLeft)}s`);
+    this.head.set(`${list.length} INCIDENT${list.length === 1 ? "" : "S"} · ${tow.ready ? `TOW $${tow.cost}` : `TOW BACK IN ${Math.ceil(tow.cooldownLeft)}s`}`);
     const seen = new Set();
     for (const i of list) {
       seen.add(i.id);

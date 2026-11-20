@@ -1,25 +1,35 @@
-import { el } from "../dom.js";
-import { UI } from "../theme.js";
+import { el, Cell } from "../dom.js";
+import { UI, Theme, dangerColor, riskCss } from "../theme.js";
 import { MinimapTransform, fitMinimapSize } from "../../view/MinimapTransform.js";
-import { dangerColor } from "../theme.js";
 
 const _p = { x: 0, y: 0 };
 const _r = { x: 0, y: 0, w: 0, h: 0 };
 
+// Tactical overview card: "NETWORK MAP" with a live dot, and the map in a recessed well.
 // Navigation overview. Draws from level topology (roads, junctions, gates) and a
 // few runtime markers (gate queue pressure, incidents), plus the camera's view
 // rectangle. It never renders the game world and owns no simulation logic.
 // Pressing or dragging on it re-centres the camera: it is just another camera control.
 export class Minimap {
-  constructor(parent, { level, camera, gates, outputs, theme = UI.minimap }) {
+  constructor(parent, { level, camera, gates, outputs, layout = UI.minimap }) {
     this.level = level;
     this.camera = camera;
     this.gates = gates; // [{ id, x, y }]
     this.outputs = outputs;
-    this.theme = theme;
+    this.layoutLimits = layout;
     this.root = el("div", "hud-panel hud-minimap");
+    const head = el("div", "hud-minimap-head");
+    head.append(el("span", "hud-label", "NETWORK MAP"));
+    const live = el("span", "hud-live");
+    live.append(el("i", "hud-dot"));
+    this.live = new Cell(el("b", "", "LIVE"));
+    live.append(this.live.node);
+    head.append(live);
+    const well = el("div", "hud-minimap-well");
     this.canvas = el("canvas", "hud-minimap-canvas");
-    this.root.append(this.canvas);
+    well.append(this.canvas);
+    this.root.append(head, well);
+    this.unsubscribe = Theme.onChange(() => this.restyle());
     parent.append(this.root);
     this.ctx = this.canvas.getContext("2d");
     this.size = { w: 0, h: 0 };
@@ -51,7 +61,7 @@ export class Minimap {
   // Fits the minimap to the world's aspect ratio and the current viewport; redraws the static layer.
   layout() {
     const cam = this.camera;
-    const t = this.theme;
+    const t = this.layoutLimits;
     const max = { w: Math.min(t.maxWidth, cam.width * t.maxViewportShare), h: Math.min(t.maxHeight, cam.height * t.maxViewportShare) };
     const size = fitMinimapSize(cam.world, max);
     if (size.w === this.size.w && size.h === this.size.h) return;
@@ -67,8 +77,19 @@ export class Minimap {
     this.drawnVersion = -1;
   }
 
+  // Theme changed: rebuild the cached road layer and redraw
+  restyle() {
+    if (!this.transform) return;
+    this.drawStatic();
+    this.drawnVersion = -1;
+  }
+
+  destroy() {
+    this.unsubscribe();
+  }
+
   drawStatic() {
-    const t = this.theme;
+    const t = Theme.theme.minimap;
     const tf = this.transform;
     const layer = document.createElement("canvas");
     layer.width = this.canvas.width;
@@ -101,6 +122,7 @@ export class Minimap {
 
   update(model) {
     this.model = model ?? this.model;
+    if (model) this.live.set(model.paused ? "PAUSED" : "LIVE");
     this.layout();
     if (!this.animating && this.camera.version === this.drawnVersion && this.model === this.drawnModel) return;
     this.drawnVersion = this.camera.version;
@@ -110,13 +132,14 @@ export class Minimap {
 
   draw() {
     const c = this.ctx;
-    const t = this.theme;
+    const t = { ...Theme.theme.minimap, risk: [0, 1, 2, 3].map(riskCss) };
     const tf = this.transform;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.drawImage(this.staticLayer, 0, 0);
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     const m = this.model;
     this.animating = false;
+    c.shadowBlur = t.glow; // themes with emissive HUD give markers a halo; each marker sets its own shadowColor
     if (m) {
       const time = performance.now() / 1000;
       tf.viewRect(this.camera, _r);
@@ -133,7 +156,7 @@ export class Minimap {
         const sx = _p.x;
         const sy = _p.y;
         tf.worldToMap(s.tx, s.ty, _p);
-        c.strokeStyle = color;
+        c.strokeStyle = c.shadowColor = color;
         c.lineWidth = 3 + s.risk;
         c.beginPath();
         c.moveTo(sx, sy);
@@ -152,7 +175,7 @@ export class Minimap {
         if (away) alarm = true;
         const k = hot ? 0.5 + 0.5 * Math.sin(time * (s.risk >= 3 ? 9 : 5)) : 0;
         if (hot) this.animating = true;
-        c.fillStyle = color;
+        c.fillStyle = c.shadowColor = color;
         c.beginPath();
         c.arc(_p.x, _p.y, 3 + s.risk * 1.2, 0, Math.PI * 2);
         c.fill();
@@ -196,7 +219,7 @@ export class Minimap {
         this.animating = true;
         tf.worldToMap(i.x, i.y, _p);
         const k = 0.5 + 0.5 * Math.sin(time * 6);
-        c.strokeStyle = t.incident;
+        c.strokeStyle = c.shadowColor = t.incident;
         c.globalAlpha = 1 - k * 0.6;
         c.lineWidth = 2;
         c.beginPath();
@@ -220,6 +243,7 @@ export class Minimap {
         c.globalAlpha = 1;
       }
     }
+    c.shadowBlur = 0;
     tf.viewRect(this.camera, _r);
     c.strokeStyle = t.viewport;
     c.lineWidth = 1.5;

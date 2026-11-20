@@ -3,11 +3,11 @@ import { DebugSystem } from "../../system/DebugSystem.js";
 import { VehicleStates } from "../../components/traffic/VehicleStateComponent.js";
 import { VehicleTextures } from "./vehicleTextures.js";
 import { TrafficDebugView } from "./TrafficDebugView.js";
-import { PALETTE, hex } from "./colors.js";
 import { pointAt } from "../util/geometry.js";
 import { SignalControlLayer } from "./SignalControlLayer.js";
 import { TrafficEvents } from "../TrafficEvents.js";
-import { UI } from "../ui/theme.js";
+import { UI, Theme, world } from "../ui/theme.js";
+import { toCss } from "../ui/themes.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
 
@@ -25,7 +25,7 @@ export class TrafficPresentation {
 
     initialiseSpriteLayers();
     game.world.setBounds(0, 0, map.width, map.height);
-    game.stage.backgroundColor = map.background ?? "#222";
+    game.stage.backgroundColor = toCss(world().ground);
     this.syncCamera();
 
     this.lanes = em.registerSystem({}, ["LaneComponent"]);
@@ -52,6 +52,8 @@ export class TrafficPresentation {
     spriteLayers.fg3.add(this.obstacleGfx);
 
     this.textures = new VehicleTextures();
+    this.themeDirty = false;
+    this.themeBinding = Theme.onChange(() => (this.themeDirty = true)); // restyled at the start of the next frame
     this.sprites = new Map(); // vehicle entity -> sprite
     this.pool = [];
     this.frame = 0;
@@ -74,15 +76,17 @@ export class TrafficPresentation {
     events.on(TrafficEvents.CASH_EARNED, (vehicle, amount) => {
       if (amount <= this.base * 1.3) return; // only released queues are worth a popup
       const p = vehicle.components.Position;
-      this.float(`+$${amount}`, p.x, p.y - 14, amount >= this.base * 5 ? UI.world.cashBig : UI.world.cash, amount >= this.base * 5 ? "bold 20px system-ui" : "bold 15px system-ui");
+      const w = world();
+      this.float(`+$${amount}`, p.x, p.y - 14, amount >= this.base * 5 ? w.cashBig : w.cash, amount >= this.base * 5 ? "800 20px Epilogue, system-ui" : "800 15px Epilogue, system-ui");
     });
     events.on(TrafficEvents.FLOW_RELEASE, (stream, release, clean) => {
       pointAt(stream.lane.path, stream.lane.stopLineS, _p);
-      this.float(clean ? `CLEAN RELEASE  +$${release.paid}` : "POOR RELEASE", _p.x, _p.y - 40, clean ? UI.world.cashBig : "#ff8a8a", "bold 18px system-ui", 2.2);
+      const w = world();
+      this.float(clean ? `CLEAN RELEASE  +$${release.paid}` : "POOR RELEASE", _p.x, _p.y - 40, clean ? w.cashBig : w.warnText, "800 18px Epilogue, system-ui", 2.2);
     });
     events.on(TrafficEvents.FLOW_BROKEN, (reason) => {
       const c = session.level.junctions[0].bounds;
-      this.float(reason === "timeout" ? "FLOW FADING" : "FLOW BROKEN", c.x + c.w / 2, c.y - 30, "#ff8a8a", "bold 18px system-ui", 1.6);
+      this.float(reason === "timeout" ? "FLOW FADING" : "FLOW BROKEN", c.x + c.w / 2, c.y - 30, world().warnText, "800 18px Epilogue, system-ui", 1.6);
     });
 
     this.debugSystem = new DebugSystem({ testSprite: false });
@@ -97,34 +101,71 @@ export class TrafficPresentation {
     game.camera.y = this.camera.y;
   }
 
+  // The static world: ground pattern, buildings, roads, markings, gates. Painted
+  // from the active theme's world tokens; rebuilt when the theme changes.
   drawStatic(session) {
     const level = session.level;
+    const w = world();
     const g = game.add.graphics(0, 0);
     spriteLayers.bg0.add(g);
+    this.staticObjs = [g];
+    const map = level.map;
 
+    // Ground pattern: paper dots (Day/Night) or a circuit grid (Cyberpunk)
+    if (w.pattern === "dots") {
+      g.beginFill(w.patternColor, w.patternAlpha);
+      for (let x = 16; x < map.width; x += 32) for (let y = 16; y < map.height; y += 32) g.drawCircle(x, y, 2.4);
+      g.endFill();
+    } else if (w.pattern === "grid") {
+      g.lineStyle(1, w.patternColor, w.patternAlpha);
+      for (let x = 0; x <= map.width; x += 40) {
+        g.moveTo(x, 0);
+        g.lineTo(x, map.height);
+      }
+      for (let y = 0; y <= map.height; y += 40) {
+        g.moveTo(0, y);
+        g.lineTo(map.width, y);
+      }
+      g.lineStyle(0);
+    }
+
+    // Buildings: tabletop blocks. The theme sets their colour, not the level.
     for (const b of level.buildings ?? []) {
-      g.beginFill(hex(b.color), 1);
+      if (w.buildingShadowAlpha > 0) {
+        g.beginFill(w.buildingShadow, w.buildingShadowAlpha);
+        g.drawRect(b.x + 2, b.y + 6, b.w, b.h);
+        g.endFill();
+      }
+      g.lineStyle(1.5, w.buildingEdge, w.buildingEdgeAlpha);
+      g.beginFill(w.building, 1);
       g.drawRect(b.x, b.y, b.w, b.h);
       g.endFill();
-      g.beginFill(0xffffff, 0.08);
+      g.lineStyle(0);
+      g.beginFill(w.buildingTop, 1);
       g.drawRect(b.x + 6, b.y + 6, b.w - 12, b.h - 12);
       g.endFill();
     }
+    // Roads: edge first (a wider stroke underneath), then the surface, then junction boxes
     for (const r of level.roads ?? []) {
-      g.lineStyle(r.width, PALETTE.road, 1);
+      g.lineStyle(r.width + w.roadEdgeWidth * 2, w.roadEdge, w.roadEdgeAlpha);
+      g.moveTo(r.points[0][0], r.points[0][1]);
+      for (let i = 1; i < r.points.length; i++) g.lineTo(r.points[i][0], r.points[i][1]);
+    }
+    for (const r of level.roads ?? []) {
+      g.lineStyle(r.width, w.road, 1);
       g.moveTo(r.points[0][0], r.points[0][1]);
       for (let i = 1; i < r.points.length; i++) g.lineTo(r.points[i][0], r.points[i][1]);
     }
     g.lineStyle(0);
     for (const j of level.junctions) {
-      g.beginFill(PALETTE.junction, 1);
+      g.beginFill(w.junction, 1);
       g.drawRect(j.bounds.x, j.bounds.y, j.bounds.w, j.bounds.h);
       g.endFill();
     }
     // Centre dashes between opposing lanes, stopping short of junctions
     for (const r of level.roads ?? []) this.dashes(g, r.points, level.junctions);
     // Faint divider between the two inbound lanes of each approach
-    g.lineStyle(1.5, PALETTE.marking, 0.45);
+    g.lineStyle(1.5, w.laneDivider, 0.45);
     for (const e of this.lanes) {
       const lane = e.components.LaneComponent;
       if (lane.kind !== "approach" || lane.index !== 0) continue;
@@ -135,28 +176,56 @@ export class TrafficPresentation {
       g.lineTo(lane.points[lane.points.length - 1][0] + nx, lane.points[lane.points.length - 1][1] + ny);
     }
     // Stop lines at the end of approach lanes (recoloured by syncLights)
-    g.lineStyle(3, PALETTE.stopLine, 1);
+    g.lineStyle(3, w.stopLine, 1);
     for (const { lane } of this.stopLines) this.line(g, lane, lane.stopLineS, 17);
-    // Gates: a green chevron where traffic enters, a red bar where it leaves
+    // Gates: a disc where traffic enters, a bar where it leaves, each with its stamped label
+    const label = (text, x, y) => {
+      const t = game.add.text(x, y, text, { font: "700 10px 'Space Grotesk', system-ui", fill: toCss(w.stopLine) });
+      t.fill = w.labelText;
+      t.alpha = 0.55;
+      t.anchor.setTo(0.5, 0.5);
+      t.letterSpacing = 1;
+      spriteLayers.bg0.add(t);
+      this.staticObjs.push(t);
+    };
     for (const e of this.inputGates) {
-      for (const laneEntity of e.components.InputGateComponent.lanes) {
+      const gate = e.components.InputGateComponent;
+      for (const laneEntity of gate.lanes) {
         const lane = laneEntity.components.LaneComponent;
         pointAt(lane.path, 8, _p);
-        g.beginFill(PALETTE.inputGate, 1);
+        g.lineStyle(w.lightGlow > 0 ? 3 : 0, w.inputGate, 0.35);
+        g.beginFill(w.inputGate, 1);
         g.drawCircle(_p.x, _p.y, 12);
         g.endFill();
       }
+      const first = gate.lanes[0].components.LaneComponent;
+      pointAt(first.path, 8, _p);
+      if (gate.label) label(gate.label.toUpperCase(), _p.x + Math.cos(_p.angle) * 74 - Math.sin(_p.angle) * 36, _p.y + Math.sin(_p.angle) * 74 + Math.cos(_p.angle) * 36);
     }
-    g.lineStyle(5, PALETTE.outputGate, 1);
+    g.lineStyle(5, w.outputGate, 1);
     for (const e of this.outputGates) {
       const lane = e.components.OutputGateComponent.lane.components.LaneComponent;
       this.line(g, lane, lane.length - 3, 17);
     }
+    g.lineStyle(0);
     this.staticGfx = g;
   }
 
+  // Theme changed: swap the ground, repaint the static layer, rebuild car textures
+  restyle() {
+    this.themeDirty = false;
+    game.stage.backgroundColor = toCss(world().ground);
+    for (const o of this.staticObjs) o.destroy();
+    this.drawStatic(this.session);
+    this.lastLightKey = ""; // stop-line colours
+    this.textures.destroy();
+    this.textures = new VehicleTextures();
+    for (const entry of this.sprites.values()) entry.mode = -1; // reload every car's texture
+  }
+
   dashes(g, pts, junctions) {
-    g.lineStyle(2, PALETTE.marking, 0.8);
+    const w = world();
+    g.lineStyle(2, w.marking, w.markingAlpha);
     const [x0, y0] = pts[0];
     const [x1, y1] = pts[pts.length - 1];
     const len = Math.hypot(x1 - x0, y1 - y0);
@@ -175,7 +244,7 @@ export class TrafficPresentation {
   }
 
   float(text, x, y, fill, font, life = 1.4) {
-    const t = game.add.text(x, y, text, { font, fill, stroke: "#10131a", strokeThickness: 4 });
+    const t = game.add.text(x, y, text, { font, fill, stroke: world().labelStroke, strokeThickness: 4 });
     t.anchor.setTo(0.5, 1);
     spriteLayers.fg5.add(t);
     this.floats.push({ t, y0: y, born: game.time.now, life: life * 1000 });
@@ -197,6 +266,7 @@ export class TrafficPresentation {
   }
 
   update() {
+    if (this.themeDirty) this.restyle();
     this.syncCamera();
     this.syncFloats();
     this.worldUi.update();
@@ -223,8 +293,17 @@ export class TrafficPresentation {
     this.lastLightKey = key;
     const g = this.lightGfx;
     g.clear();
+    const w = world();
     for (const { lane, group } of this.stopLines) {
-      g.lineStyle(5, PALETTE.light[group.state], 1);
+      const color = w.light[group.state];
+      if (w.lightGlow > 0) {
+        // Emissive: a wide soft stripe under the line reads as light on the road
+        g.lineStyle(14, color, w.lightGlow * 0.35);
+        this.line(g, lane, lane.stopLineS, 17);
+        g.lineStyle(9, color, w.lightGlow * 0.5);
+        this.line(g, lane, lane.stopLineS, 17);
+      }
+      g.lineStyle(5, color, 1);
       this.line(g, lane, lane.stopLineS, 17);
     }
   }
@@ -240,15 +319,15 @@ export class TrafficPresentation {
     for (const e of obstacles) {
       const o = e.components.ObstacleComponent;
       if (!o.active) continue;
-      g.lineStyle(6, PALETTE.hazard, pulse);
+      g.lineStyle(6, world().hazard, pulse);
       for (const b of o.blocks) this.line(g, b.lane.components.LaneComponent, b.rear, 11);
-      g.lineStyle(2, o.towed ? UI.world.tow : PALETTE.hazard, pulse);
+      g.lineStyle(2, o.towed ? world().tow : world().hazard, pulse);
       for (const v of o.vehicles) {
         const p = v.components.Position;
         g.drawCircle(p.x, p.y, 44);
         if (o.towed) {
           // Tow truck on its way: a yellow bar that shrinks as the wreck clears
-          g.lineStyle(4, UI.world.tow, 1);
+          g.lineStyle(4, world().tow, 1);
           g.moveTo(p.x - 22, p.y - 30);
           g.lineTo(p.x - 22 + 44 * Math.min(1, o.remaining / this.towDelay), p.y - 30);
         }
@@ -269,6 +348,7 @@ export class TrafficPresentation {
         const sprite = this.pool.pop() ?? spriteLayers.fg2.create(0, 0, this.textures.get(vc, 0));
         sprite.revive();
         sprite.anchor.setTo(0.5, 0.5);
+        if (!sprite.fx) sprite.fx = sprite.addChild(game.make.sprite(0, 0)); // headlight beam / neon trail, set per theme
         entry = { sprite, mode: -1, frame }; // -1 forces a texture load below
         this.sprites.set(v, entry);
       }
@@ -277,6 +357,13 @@ export class TrafficPresentation {
       if (mode !== entry.mode) {
         entry.mode = mode;
         entry.sprite.loadTexture(this.textures.get(vc, mode));
+        const fx = this.textures.fx(vc, mode);
+        entry.sprite.fx.visible = !!fx;
+        if (fx) {
+          entry.sprite.fx.loadTexture(fx.bmd);
+          entry.sprite.fx.anchor.setTo(fx.anchorX, 0.5);
+          entry.sprite.fx.x = fx.x;
+        }
       }
       entry.sprite.x = pos.x;
       entry.sprite.y = pos.y;
@@ -295,6 +382,7 @@ export class TrafficPresentation {
 
   destroy() {
     this.pointerBinding.detach();
+    this.themeBinding();
     this.worldUi.destroy();
     for (const f of this.floats) f.t.destroy();
     this.textures.destroy();

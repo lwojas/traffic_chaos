@@ -17,7 +17,7 @@ export class StatusBanner {
     this.detail = new Cell(el("div", "hud-banner-detail", ""));
     this.next = new Cell(el("div", "hud-result-next", ""));
     const buttons = el("div", "hud-result-actions");
-    const retry = el("button", "hud-button active", "Retry (R)");
+    const retry = el("button", "hud-button hud-action", "Retry (R)");
     retry.addEventListener("click", () => actions.restart());
     this.nextButton = el("button", "hud-button", "Next map");
     this.nextButton.addEventListener("click", () => actions.nextLevel());

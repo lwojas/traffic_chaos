@@ -56,8 +56,8 @@ The UI is a consumer of the simulation. Nothing below writes to the ECS; the onl
 ```
 Simulation (ECS, stats)
    ├─ HudReadModel          view/       one snapshot per refresh: score, capacity, gates, incidents
-   │     └─ GameHud widgets ui/hud/     ScoreDisplay, GridlockDisplay, QueueStatus, IncidentStatus,
-   │                                    StatusDisplay, GameControls, StatusBanner, Minimap
+   │     └─ GameHud widgets ui/hud/     LoadDisplay, CashDisplay (cash tiles + Flow), QueueStatus, TowPanel (incidents),
+   │                                    GameControls + SettingsMenu (theme, developer mode), HintCard, StatusBanner, Minimap
    ├─ TrafficPresentation   presentation/  Phaser world drawing
    │     └─ SignalControlLayer           world-space signal controls (+ signalControlSkin.js)
    └─ DebugPanel + debug overlay         detailed dev info (D toggles debug mode)
@@ -70,9 +70,9 @@ ViewCamera (view/) <- ViewportInput (ui/) <- pointer/keys;  Minimap and edge scr
 - **Signal controls.** `computeSignalControls(level)` derives one control per (signal group, approach lane) beside the stop line, from topology only. `SignalControlLayer` reads `SignalGroupComponent.state` for appearance, hit-tests in world coordinates (`pick`), and calls `onToggle(groupId)`. While paused, a toggle stays queued until the next tick; a ring marks it (`GameActions.isSignalPending`). To restyle, change `signalControlSkin.js` or `theme.js`; interaction code does not change.
 - **HUD values.** Display authoritative stats, never recompute. `networkCapacity` is the share of lanes not blocked by incidents. Failure proximity is `peakQueueFill` (fullest input queue) and `gridlockProgress` (full-queue timer / `gridlock.fullSeconds`); both are computed in `TrafficStatsSystem`. Add new HUD numbers to stats first, then to `HudReadModel`.
 - **DOM cost.** Widgets write through `Cell` (`ui/dom.js`), which skips unchanged values. The HUD refreshes at 10 Hz; the minimap redraws only when `camera.version` or the snapshot changes.
-- **Styling.** All sizes, colours and margins live in `ui/theme.js` (exported to CSS custom properties by `applyTheme`; `game-hud.css` consumes them).
+- **Themes.** `ui/themes.js` is the single source: `day`, `night`, `cyberpunk`, each with `css` (semantic `--theme-*` tokens), `world` (Phaser ground/roads/lights/vehicles), `signal` and `minimap` tokens. Components consume tokens and never name a theme: CSS uses `var(--theme-*)`, Phaser code reads `world()`/`signalTokens()`/`riskHex()` from `ui/theme.js`. `Theme` (a `ThemeManager`) switches, persists and notifies; `TrafficPresentation` repaints the static world and car textures, `Minimap` restyles, on change. Themes are presentation only and never touch simulation, scoring or levels. Add a theme by adding an object to `THEMES` with the same keys (`tests/theme.test.js` enforces it). Layout constants (sizes, widths) stay in `theme.js` `UI`; `game-hud.css` holds structure only.
 - **Minimap.** Draws level topology (roads, junctions) plus gate pressure, incidents and the view rectangle. It does not render the world. Click or drag calls `camera.glideTo` / `centerOn`.
-- **Debug mode.** `DebugMode` is the shared switch (panel + overlay). Pause, restart, speed and `D` keys live in `GameHud`; the panel keeps `.` (step) and `1-9` (signal groups). The overlay bitmap is viewport-sized and screen-fixed, so `TrafficDebugView` translates by the camera.
+- **Debug mode.** There is no debug button in the player HUD; it is Settings > Developer mode or `D`. `DebugMode` is the shared switch (panel + overlay). Pause, restart, speed and `D` keys live in `GameHud`; the panel keeps `.` (step) and `1-9` (signal groups). The overlay bitmap is viewport-sized and screen-fixed, so `TrafficDebugView` translates by the camera.
 
 ## Gameplay loop: Flow, cash, tow, medals
 

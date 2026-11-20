@@ -1,20 +1,17 @@
 import { el } from "../dom.js";
-import { applyTheme } from "../theme.js";
+import { applyLayout } from "../theme.js";
 import { HudReadModel } from "../../view/HudReadModel.js";
 import { CashDisplay } from "./CashDisplay.js";
 import { TowPanel } from "./TowPanel.js";
 import { MapSelect } from "./MapSelect.js";
-import { GridlockDisplay } from "./GridlockDisplay.js";
+import { LoadDisplay } from "./LoadDisplay.js";
 import { QueueStatus } from "./QueueStatus.js";
-import { IncidentStatus } from "./IncidentStatus.js";
-import { StatusDisplay } from "./StatusDisplay.js";
+import { HintCard } from "./HintCard.js";
 import { GameControls } from "./GameControls.js";
 import { StatusBanner } from "./StatusBanner.js";
 import { Minimap } from "./Minimap.js";
 
 const REFRESH_SECONDS = 0.1; // simulation values change per tick; the DOM refreshes at 10 Hz
-const HINT = "Hold traffic to build a queue, then click its control to RELEASE · T tow · drag or arrow keys to scroll · Space pause · R restart";
-
 // The player HUD: a set of independent widgets anchored to the corners of the
 // game viewport (CSS, so it follows resizes and is unrelated to world size).
 // It reads one HudReadModel snapshot per refresh and hands it to every widget;
@@ -24,7 +21,7 @@ export class GameHud {
     this.root = root;
     this.actions = actions;
     this.widgets = [];
-    applyTheme(root);
+    applyLayout(root);
     this.onKey = (e) => this.handleKey(e);
     window.addEventListener("keydown", this.onKey);
   }
@@ -47,24 +44,29 @@ export class GameHud {
     const maps = new MapSelect(center, this.actions);
     const openMaps = () => maps.toggle();
     this.tow = new TowPanel(topLeft, this.actions, camera);
+    const recenter = () => {
+      const j = session.level.junctions[0].bounds;
+      camera.glideTo(j.x + j.w / 2, j.y + j.h / 2);
+    };
+    // Reading order: what is happening (load), what am I earning (cash/flow),
+    // what needs attention (incidents, queues), what can I do (controls, hint).
     this.widgets = [
-      new CashDisplay(topLeft),
-      new IncidentStatus(topLeft, camera),
+      new LoadDisplay(topLeft),
       this.tow,
       new QueueStatus(topLeft, first.gates, camera),
-      new GridlockDisplay(topCenter),
-      new StatusDisplay(topRight),
-      new GameControls(topRight, this.actions, openMaps),
+      new CashDisplay(topCenter),
+      new GameControls(topRight, this.actions, { onMaps: openMaps, onRecenter: recenter }),
       new Minimap(bottomRight, { level: session.level, camera, gates: this.model.inputGatePoints(), outputs: this.model.outputGatePoints() }),
       new StatusBanner(center, this.actions, openMaps),
+      new HintCard(bottomLeft),
     ];
-    bottomLeft.append(el("div", "hud-hint", HINT));
     this.minimap = this.widgets.find((w) => w instanceof Minimap);
     this.snapshot = first;
     this.elapsed = REFRESH_SECONDS;
   }
 
   clear() {
+    for (const w of this.widgets) w.destroy?.();
     this.root.replaceChildren();
     this.widgets = [];
     this.minimap = null;
