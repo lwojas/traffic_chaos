@@ -43,7 +43,6 @@ export class GameHud {
     const first = this.model.read();
     const maps = new MapSelect(center, this.actions);
     const openMaps = () => maps.toggle();
-    this.tow = new TowPanel(topLeft, this.actions, camera);
     const recenter = () => {
       const j = session.level.junctions[0].bounds;
       camera.glideTo(j.x + j.w / 2, j.y + j.h / 2);
@@ -52,8 +51,8 @@ export class GameHud {
     // what needs attention (incidents, queues), what can I do (controls, hint).
     this.widgets = [
       new LoadDisplay(topLeft),
-      this.tow,
       new QueueStatus(topLeft, first.gates, camera),
+      (this.tow = new TowPanel(topLeft, this.actions, camera)), // conditional: last in the column so it can never move a permanent panel
       new CashDisplay(topCenter),
       new GameControls(topRight, this.actions, { onMaps: openMaps, onRecenter: recenter }),
       new Minimap(bottomRight, { level: session.level, camera, gates: this.model.inputGatePoints(), outputs: this.model.outputGatePoints() }),

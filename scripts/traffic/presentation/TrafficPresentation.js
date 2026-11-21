@@ -171,16 +171,20 @@ export class TrafficPresentation {
     }
     // Centre dashes between opposing lanes, stopping short of junctions
     for (const r of level.roads ?? []) this.dashes(g, r.points, level.junctions);
-    // Faint divider between the two inbound lanes of each approach
-    g.lineStyle(1.5, w.laneDivider, 0.45);
+    // Divider between the two inbound lanes of each approach: short, tight dashes,
+    // distinct from the longer centre-line dashes
+    g.lineStyle(1.5, w.laneDivider, 0.7);
+    const q = { x: 0, y: 0, angle: 0 };
     for (const e of this.lanes) {
       const lane = e.components.LaneComponent;
       if (lane.kind !== "approach" || lane.index !== 0) continue;
-      pointAt(lane.path, 0, _p);
-      const nx = -Math.sin(_p.angle) * 10;
-      const ny = Math.cos(_p.angle) * 10;
-      g.moveTo(lane.points[0][0] + nx, lane.points[0][1] + ny);
-      g.lineTo(lane.points[lane.points.length - 1][0] + nx, lane.points[lane.points.length - 1][1] + ny);
+      for (let d = 0; d < lane.length; d += 12) {
+        const end = Math.min(d + 5, lane.length);
+        pointAt(lane.path, d, _p);
+        pointAt(lane.path, end, q);
+        g.moveTo(_p.x - Math.sin(_p.angle) * 10, _p.y + Math.cos(_p.angle) * 10);
+        g.lineTo(q.x - Math.sin(q.angle) * 10, q.y + Math.cos(q.angle) * 10);
+      }
     }
     // Stop lines at the end of approach lanes (recoloured by syncLights)
     g.lineStyle(3, w.stopLine, 1);
