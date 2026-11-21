@@ -8,8 +8,8 @@ const TURNS = ["left", "straight", "right", "uturn"];
 const LANE_KINDS = ["approach", "exit"];
 const LIGHT_QUALITY = ["low", "medium", "high"];
 export const MEDALS = ["bronze", "silver", "gold"];
-// time: seconds survived, earned: cash earned, flow: peak chain multiplier, maxIncidents: at most this many
-export const RATING_KEYS = ["time", "earned", "flow", "maxIncidents"];
+// time: seconds survived, earned: income earned, satisfaction: average satisfaction 0..1, maxIncidents: at most this many
+export const RATING_KEYS = ["time", "earned", "satisfaction", "maxIncidents"];
 
 export class LevelValidationError extends Error {
   constructor(levelId, errors) {
@@ -251,13 +251,13 @@ export function validateLevel(level, options = {}) {
   optNum("incidents.duration", level.incidents?.duration, 0.001);
   optNum("scoring.perVehicle", level.scoring?.perVehicle);
   optNum("scoring.perIncident", level.scoring?.perIncident);
-  for (const key of ["economy", "flow", "interventions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
-  optNum("economy.perVehicle", level.economy?.perVehicle);
+  for (const key of ["economy", "satisfaction", "multiplier", "pressure", "interventions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
+  optNum("economy.incomePerSecond", level.economy?.incomePerSecond);
   optNum("economy.startCash", level.economy?.startCash);
-  optNum("flow.minQueue", level.flow?.minQueue);
-  optNum("flow.burstMax", level.flow?.burstMax);
-  optNum("flow.chainSeconds", level.flow?.chainSeconds, 0.001);
-  if (level.flow?.steps !== undefined && !(Array.isArray(level.flow.steps) && level.flow.steps.length > 0 && level.flow.steps.every((n) => isNum(n) && n >= 1))) err("flow.steps", "must be a non-empty array of numbers >= 1");
+  for (const key of ["start", "rest", "restSeconds", "grace", "fullWait", "curve", "drainMax", "drainK", "gateWeight", "gain", "gainRef", "gainCurve", "recoverSeconds", "refEntries"]) optNum(`satisfaction.${key}`, level.satisfaction?.[key]);
+  optNum("multiplier.min", level.multiplier?.min);
+  optNum("multiplier.max", level.multiplier?.max);
+  if (level.pressure?.riskBands !== undefined && !(Array.isArray(level.pressure.riskBands) && level.pressure.riskBands.every(isNum))) err("pressure.riskBands", "must be an array of numbers");
   if (isObject(level.interventions)) for (const [id, cfg] of Object.entries(level.interventions)) for (const [k, v] of Object.entries(cfg ?? {})) optNum(`interventions.${id}.${k}`, v);
   optNum("goal.surviveSeconds", level.goal?.surviveSeconds, 1);
   if (isObject(level.ratings))

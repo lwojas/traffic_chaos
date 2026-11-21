@@ -63,3 +63,11 @@ test("stability is a label over the worse of queue fill and lost capacity", () =
   assert.equal(stabilityBand(0.1, 0.3).label, "STRAINED"); // incidents cost capacity
   assert.equal(stabilityBand(0.9, 1).label, "CRITICAL");
 });
+
+test("every theme defines the satisfaction and income tokens, and no theme still carries the old flow token", () => {
+  for (const t of Object.values(THEMES)) {
+    for (const k of ["satisfaction", "satisfaction-warning", "satisfaction-critical", "income-positive", "income-multiplier"]) assert.match(t.css[k], /^#[0-9a-f]{6}$/i, `${t.id} ${k}`);
+    assert.equal(t.css.flow, undefined, `${t.id} has no flow token`);
+    assert.notEqual(t.css.satisfaction, t.css["satisfaction-critical"]);
+  }
+});

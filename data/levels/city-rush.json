@@ -1,0 +1,2108 @@
+{
+  "schemaVersion": 2,
+  "id": "city_rush",
+  "name": "Rush Hour",
+  "map": {
+    "width": 3400,
+    "height": 1700,
+    "background": "#33402f"
+  },
+  "traffic": {
+    "seed": 7,
+    "vehicleMix": {
+      "car": 70,
+      "fast": 10,
+      "slow": 8,
+      "truck": 7,
+      "taxi": 5
+    }
+  },
+  "demandCurves": {
+    "shift": [
+      {
+        "time": 0,
+        "rate": 0.07
+      },
+      {
+        "time": 60,
+        "rate": 0.11
+      },
+      {
+        "time": 180,
+        "rate": 0.15
+      },
+      {
+        "time": 360,
+        "rate": 0.19
+      },
+      {
+        "time": 540,
+        "rate": 0.22
+      }
+    ]
+  },
+  "gridlock": {
+    "fullSeconds": 9
+  },
+  "incidents": {
+    "duration": 15
+  },
+  "scoring": {
+    "perVehicle": 1,
+    "perIncident": 5
+  },
+  "roads": [
+    {
+      "id": "road_v0",
+      "name": "Harbour Street",
+      "points": [
+        [
+          700,
+          0
+        ],
+        [
+          700,
+          1700
+        ]
+      ],
+      "width": 80
+    },
+    {
+      "id": "road_v1",
+      "name": "Station Avenue",
+      "points": [
+        [
+          1700,
+          0
+        ],
+        [
+          1700,
+          1700
+        ]
+      ],
+      "width": 80
+    },
+    {
+      "id": "road_v2",
+      "name": "Orchard Way",
+      "points": [
+        [
+          2700,
+          0
+        ],
+        [
+          2700,
+          1700
+        ]
+      ],
+      "width": 80
+    },
+    {
+      "id": "road_h0",
+      "name": "Quarry Road",
+      "points": [
+        [
+          0,
+          450
+        ],
+        [
+          3400,
+          450
+        ]
+      ],
+      "width": 80
+    },
+    {
+      "id": "road_h1",
+      "name": "Canal Street",
+      "points": [
+        [
+          0,
+          1250
+        ],
+        [
+          3400,
+          1250
+        ]
+      ],
+      "width": 80
+    }
+  ],
+  "lanes": [
+    {
+      "id": "lane_j_0_0_n_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v0",
+      "junction": "j_0_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          690,
+          0
+        ],
+        [
+          690,
+          410
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_0_n_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_v0",
+      "junction": "j_0_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          670,
+          0
+        ],
+        [
+          670,
+          410
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_0_n_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_v0",
+      "points": [
+        [
+          710,
+          410
+        ],
+        [
+          710,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_0_w_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h0",
+      "junction": "j_0_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          0,
+          460
+        ],
+        [
+          660,
+          460
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_0_w_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_h0",
+      "junction": "j_0_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          0,
+          480
+        ],
+        [
+          660,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_0_w_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_h0",
+      "points": [
+        [
+          660,
+          440
+        ],
+        [
+          0,
+          440
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_1_n_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v1",
+      "junction": "j_0_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1690,
+          0
+        ],
+        [
+          1690,
+          410
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_1_n_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_v1",
+      "junction": "j_0_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1670,
+          0
+        ],
+        [
+          1670,
+          410
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_1_n_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_v1",
+      "points": [
+        [
+          1710,
+          410
+        ],
+        [
+          1710,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_2_n_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v2",
+      "junction": "j_0_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2690,
+          0
+        ],
+        [
+          2690,
+          410
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_2_n_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_v2",
+      "junction": "j_0_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2670,
+          0
+        ],
+        [
+          2670,
+          410
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_2_n_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_v2",
+      "points": [
+        [
+          2710,
+          410
+        ],
+        [
+          2710,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_2_e_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h0",
+      "junction": "j_0_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          3400,
+          440
+        ],
+        [
+          2740,
+          440
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_2_e_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_h0",
+      "junction": "j_0_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          3400,
+          420
+        ],
+        [
+          2740,
+          420
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_0_2_e_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_h0",
+      "points": [
+        [
+          2740,
+          460
+        ],
+        [
+          3400,
+          460
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_0_s_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v0",
+      "junction": "j_1_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          710,
+          1700
+        ],
+        [
+          710,
+          1290
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_0_s_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_v0",
+      "junction": "j_1_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          730,
+          1700
+        ],
+        [
+          730,
+          1290
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_0_s_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_v0",
+      "points": [
+        [
+          690,
+          1290
+        ],
+        [
+          690,
+          1700
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_0_w_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h1",
+      "junction": "j_1_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          0,
+          1260
+        ],
+        [
+          660,
+          1260
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_0_w_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_h1",
+      "junction": "j_1_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          0,
+          1280
+        ],
+        [
+          660,
+          1280
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_0_w_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_h1",
+      "points": [
+        [
+          660,
+          1240
+        ],
+        [
+          0,
+          1240
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_1_s_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v1",
+      "junction": "j_1_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1710,
+          1700
+        ],
+        [
+          1710,
+          1290
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_1_s_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_v1",
+      "junction": "j_1_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1730,
+          1700
+        ],
+        [
+          1730,
+          1290
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_1_s_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_v1",
+      "points": [
+        [
+          1690,
+          1290
+        ],
+        [
+          1690,
+          1700
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_2_s_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v2",
+      "junction": "j_1_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2710,
+          1700
+        ],
+        [
+          2710,
+          1290
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_2_s_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_v2",
+      "junction": "j_1_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2730,
+          1700
+        ],
+        [
+          2730,
+          1290
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_2_s_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_v2",
+      "points": [
+        [
+          2690,
+          1290
+        ],
+        [
+          2690,
+          1700
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_2_e_in_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h1",
+      "junction": "j_1_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          3400,
+          1240
+        ],
+        [
+          2740,
+          1240
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_2_e_in_1",
+      "kind": "approach",
+      "index": 1,
+      "road": "road_h1",
+      "junction": "j_1_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          3400,
+          1220
+        ],
+        [
+          2740,
+          1220
+        ]
+      ]
+    },
+    {
+      "id": "lane_j_1_2_e_out",
+      "kind": "exit",
+      "index": 0,
+      "road": "road_h1",
+      "points": [
+        [
+          2740,
+          1260
+        ],
+        [
+          3400,
+          1260
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_0_j_1_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v0",
+      "junction": "j_1_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          690,
+          490
+        ],
+        [
+          690,
+          1210
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_0_j_0_1",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h0",
+      "junction": "j_0_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          740,
+          460
+        ],
+        [
+          1660,
+          460
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_1_j_1_1",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v1",
+      "junction": "j_1_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1690,
+          490
+        ],
+        [
+          1690,
+          1210
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_1_j_0_2",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h0",
+      "junction": "j_0_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1740,
+          460
+        ],
+        [
+          2660,
+          460
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_1_j_0_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h0",
+      "junction": "j_0_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1660,
+          440
+        ],
+        [
+          740,
+          440
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_2_j_1_2",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v2",
+      "junction": "j_1_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2690,
+          490
+        ],
+        [
+          2690,
+          1210
+        ]
+      ]
+    },
+    {
+      "id": "link_j_0_2_j_0_1",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h0",
+      "junction": "j_0_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2660,
+          440
+        ],
+        [
+          1740,
+          440
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_0_j_0_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v0",
+      "junction": "j_0_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          710,
+          1210
+        ],
+        [
+          710,
+          490
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_0_j_1_1",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h1",
+      "junction": "j_1_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          740,
+          1260
+        ],
+        [
+          1660,
+          1260
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_1_j_0_1",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v1",
+      "junction": "j_0_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1710,
+          1210
+        ],
+        [
+          1710,
+          490
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_1_j_1_2",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h1",
+      "junction": "j_1_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1740,
+          1260
+        ],
+        [
+          2660,
+          1260
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_1_j_1_0",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h1",
+      "junction": "j_1_0",
+      "decisionDistance": 170,
+      "points": [
+        [
+          1660,
+          1240
+        ],
+        [
+          740,
+          1240
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_2_j_0_2",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_v2",
+      "junction": "j_0_2",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2710,
+          1210
+        ],
+        [
+          2710,
+          490
+        ]
+      ]
+    },
+    {
+      "id": "link_j_1_2_j_1_1",
+      "kind": "approach",
+      "index": 0,
+      "road": "road_h1",
+      "junction": "j_1_1",
+      "decisionDistance": 170,
+      "points": [
+        [
+          2660,
+          1240
+        ],
+        [
+          1740,
+          1240
+        ]
+      ]
+    }
+  ],
+  "inputGates": [
+    {
+      "id": "input_n1",
+      "label": "INPUT N1",
+      "lanes": [
+        "lane_j_0_0_n_in_0",
+        "lane_j_0_0_n_in_1"
+      ],
+      "queueCapacity": 8,
+      "demand": {
+        "curve": "shift"
+      },
+      "routes": [
+        {
+          "route": "route_n1_straight",
+          "weight": 6
+        }
+      ]
+    },
+    {
+      "id": "input_w1",
+      "label": "INPUT W1",
+      "lanes": [
+        "lane_j_0_0_w_in_0",
+        "lane_j_0_0_w_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "shift"
+      },
+      "routes": [
+        {
+          "route": "route_w1_right0",
+          "weight": 2
+        },
+        {
+          "route": "route_w1_right1",
+          "weight": 1.5
+        }
+      ]
+    },
+    {
+      "id": "input_n3",
+      "label": "INPUT N3",
+      "lanes": [
+        "lane_j_0_2_n_in_0",
+        "lane_j_0_2_n_in_1"
+      ],
+      "queueCapacity": 8,
+      "demand": {
+        "curve": "shift"
+      },
+      "routes": [
+        {
+          "route": "route_n3_straight",
+          "weight": 6
+        }
+      ]
+    },
+    {
+      "id": "input_w2",
+      "label": "INPUT W2",
+      "lanes": [
+        "lane_j_1_0_w_in_0",
+        "lane_j_1_0_w_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "shift"
+      },
+      "routes": [
+        {
+          "route": "route_w2_right0",
+          "weight": 2
+        },
+        {
+          "route": "route_w2_right1",
+          "weight": 1.5
+        }
+      ]
+    }
+  ],
+  "outputGates": [
+    {
+      "id": "output_s1",
+      "label": "OUTPUT S1",
+      "lane": "lane_j_1_0_s_out",
+      "outflowPerMinute": 18
+    },
+    {
+      "id": "output_s2",
+      "label": "OUTPUT S2",
+      "lane": "lane_j_1_1_s_out",
+      "outflowPerMinute": 18
+    },
+    {
+      "id": "output_s3",
+      "label": "OUTPUT S3",
+      "lane": "lane_j_1_2_s_out",
+      "outflowPerMinute": 18
+    }
+  ],
+  "junctions": [
+    {
+      "id": "j_0_0",
+      "bounds": {
+        "x": 660,
+        "y": 410,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_j_0_0_n_straight",
+          "from": "lane_j_0_0_n_in_0",
+          "to": "link_j_0_0_j_1_0",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_0_ns_straight"
+        },
+        {
+          "id": "mv_j_0_0_n_right",
+          "from": "lane_j_0_0_n_in_1",
+          "to": "lane_j_0_0_w_out",
+          "turn": "right",
+          "signalGroup": "sg_j_0_0_ns_turn"
+        },
+        {
+          "id": "mv_j_0_0_s_straight",
+          "from": "link_j_1_0_j_0_0",
+          "to": "lane_j_0_0_n_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_0_ns_straight"
+        },
+        {
+          "id": "mv_j_0_0_s_right",
+          "from": "link_j_1_0_j_0_0",
+          "to": "link_j_0_0_j_0_1",
+          "turn": "right",
+          "signalGroup": "sg_j_0_0_ns_turn"
+        },
+        {
+          "id": "mv_j_0_0_e_straight",
+          "from": "link_j_0_1_j_0_0",
+          "to": "lane_j_0_0_w_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_0_ew_straight"
+        },
+        {
+          "id": "mv_j_0_0_e_right",
+          "from": "link_j_0_1_j_0_0",
+          "to": "lane_j_0_0_n_out",
+          "turn": "right",
+          "signalGroup": "sg_j_0_0_ew_turn"
+        },
+        {
+          "id": "mv_j_0_0_w_straight",
+          "from": "lane_j_0_0_w_in_0",
+          "to": "link_j_0_0_j_0_1",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_0_ew_straight"
+        },
+        {
+          "id": "mv_j_0_0_w_right",
+          "from": "lane_j_0_0_w_in_1",
+          "to": "link_j_0_0_j_1_0",
+          "turn": "right",
+          "signalGroup": "sg_j_0_0_ew_turn"
+        }
+      ]
+    },
+    {
+      "id": "j_0_1",
+      "bounds": {
+        "x": 1660,
+        "y": 410,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_j_0_1_n_straight",
+          "from": "lane_j_0_1_n_in_0",
+          "to": "link_j_0_1_j_1_1",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_1_ns_straight"
+        },
+        {
+          "id": "mv_j_0_1_n_right",
+          "from": "lane_j_0_1_n_in_1",
+          "to": "link_j_0_1_j_0_0",
+          "turn": "right",
+          "signalGroup": "sg_j_0_1_ns_turn"
+        },
+        {
+          "id": "mv_j_0_1_s_straight",
+          "from": "link_j_1_1_j_0_1",
+          "to": "lane_j_0_1_n_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_1_ns_straight"
+        },
+        {
+          "id": "mv_j_0_1_s_right",
+          "from": "link_j_1_1_j_0_1",
+          "to": "link_j_0_1_j_0_2",
+          "turn": "right",
+          "signalGroup": "sg_j_0_1_ns_turn"
+        },
+        {
+          "id": "mv_j_0_1_e_straight",
+          "from": "link_j_0_2_j_0_1",
+          "to": "link_j_0_1_j_0_0",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_1_ew_straight"
+        },
+        {
+          "id": "mv_j_0_1_e_right",
+          "from": "link_j_0_2_j_0_1",
+          "to": "lane_j_0_1_n_out",
+          "turn": "right",
+          "signalGroup": "sg_j_0_1_ew_turn"
+        },
+        {
+          "id": "mv_j_0_1_w_straight",
+          "from": "link_j_0_0_j_0_1",
+          "to": "link_j_0_1_j_0_2",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_1_ew_straight"
+        },
+        {
+          "id": "mv_j_0_1_w_right",
+          "from": "link_j_0_0_j_0_1",
+          "to": "link_j_0_1_j_1_1",
+          "turn": "right",
+          "signalGroup": "sg_j_0_1_ew_turn"
+        }
+      ]
+    },
+    {
+      "id": "j_0_2",
+      "bounds": {
+        "x": 2660,
+        "y": 410,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_j_0_2_n_straight",
+          "from": "lane_j_0_2_n_in_0",
+          "to": "link_j_0_2_j_1_2",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_2_ns_straight"
+        },
+        {
+          "id": "mv_j_0_2_n_right",
+          "from": "lane_j_0_2_n_in_1",
+          "to": "link_j_0_2_j_0_1",
+          "turn": "right",
+          "signalGroup": "sg_j_0_2_ns_turn"
+        },
+        {
+          "id": "mv_j_0_2_s_straight",
+          "from": "link_j_1_2_j_0_2",
+          "to": "lane_j_0_2_n_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_2_ns_straight"
+        },
+        {
+          "id": "mv_j_0_2_s_right",
+          "from": "link_j_1_2_j_0_2",
+          "to": "lane_j_0_2_e_out",
+          "turn": "right",
+          "signalGroup": "sg_j_0_2_ns_turn"
+        },
+        {
+          "id": "mv_j_0_2_e_straight",
+          "from": "lane_j_0_2_e_in_0",
+          "to": "link_j_0_2_j_0_1",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_2_ew_straight"
+        },
+        {
+          "id": "mv_j_0_2_e_right",
+          "from": "lane_j_0_2_e_in_1",
+          "to": "lane_j_0_2_n_out",
+          "turn": "right",
+          "signalGroup": "sg_j_0_2_ew_turn"
+        },
+        {
+          "id": "mv_j_0_2_w_straight",
+          "from": "link_j_0_1_j_0_2",
+          "to": "lane_j_0_2_e_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_0_2_ew_straight"
+        },
+        {
+          "id": "mv_j_0_2_w_right",
+          "from": "link_j_0_1_j_0_2",
+          "to": "link_j_0_2_j_1_2",
+          "turn": "right",
+          "signalGroup": "sg_j_0_2_ew_turn"
+        }
+      ]
+    },
+    {
+      "id": "j_1_0",
+      "bounds": {
+        "x": 660,
+        "y": 1210,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_j_1_0_n_straight",
+          "from": "link_j_0_0_j_1_0",
+          "to": "lane_j_1_0_s_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_0_ns_straight"
+        },
+        {
+          "id": "mv_j_1_0_n_right",
+          "from": "link_j_0_0_j_1_0",
+          "to": "lane_j_1_0_w_out",
+          "turn": "right",
+          "signalGroup": "sg_j_1_0_ns_turn"
+        },
+        {
+          "id": "mv_j_1_0_s_straight",
+          "from": "lane_j_1_0_s_in_0",
+          "to": "link_j_1_0_j_0_0",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_0_ns_straight"
+        },
+        {
+          "id": "mv_j_1_0_s_right",
+          "from": "lane_j_1_0_s_in_1",
+          "to": "link_j_1_0_j_1_1",
+          "turn": "right",
+          "signalGroup": "sg_j_1_0_ns_turn"
+        },
+        {
+          "id": "mv_j_1_0_e_straight",
+          "from": "link_j_1_1_j_1_0",
+          "to": "lane_j_1_0_w_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_0_ew_straight"
+        },
+        {
+          "id": "mv_j_1_0_e_right",
+          "from": "link_j_1_1_j_1_0",
+          "to": "link_j_1_0_j_0_0",
+          "turn": "right",
+          "signalGroup": "sg_j_1_0_ew_turn"
+        },
+        {
+          "id": "mv_j_1_0_w_straight",
+          "from": "lane_j_1_0_w_in_0",
+          "to": "link_j_1_0_j_1_1",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_0_ew_straight"
+        },
+        {
+          "id": "mv_j_1_0_w_right",
+          "from": "lane_j_1_0_w_in_1",
+          "to": "lane_j_1_0_s_out",
+          "turn": "right",
+          "signalGroup": "sg_j_1_0_ew_turn"
+        }
+      ]
+    },
+    {
+      "id": "j_1_1",
+      "bounds": {
+        "x": 1660,
+        "y": 1210,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_j_1_1_n_straight",
+          "from": "link_j_0_1_j_1_1",
+          "to": "lane_j_1_1_s_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_1_ns_straight"
+        },
+        {
+          "id": "mv_j_1_1_n_right",
+          "from": "link_j_0_1_j_1_1",
+          "to": "link_j_1_1_j_1_0",
+          "turn": "right",
+          "signalGroup": "sg_j_1_1_ns_turn"
+        },
+        {
+          "id": "mv_j_1_1_s_straight",
+          "from": "lane_j_1_1_s_in_0",
+          "to": "link_j_1_1_j_0_1",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_1_ns_straight"
+        },
+        {
+          "id": "mv_j_1_1_s_right",
+          "from": "lane_j_1_1_s_in_1",
+          "to": "link_j_1_1_j_1_2",
+          "turn": "right",
+          "signalGroup": "sg_j_1_1_ns_turn"
+        },
+        {
+          "id": "mv_j_1_1_e_straight",
+          "from": "link_j_1_2_j_1_1",
+          "to": "link_j_1_1_j_1_0",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_1_ew_straight"
+        },
+        {
+          "id": "mv_j_1_1_e_right",
+          "from": "link_j_1_2_j_1_1",
+          "to": "link_j_1_1_j_0_1",
+          "turn": "right",
+          "signalGroup": "sg_j_1_1_ew_turn"
+        },
+        {
+          "id": "mv_j_1_1_w_straight",
+          "from": "link_j_1_0_j_1_1",
+          "to": "link_j_1_1_j_1_2",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_1_ew_straight"
+        },
+        {
+          "id": "mv_j_1_1_w_right",
+          "from": "link_j_1_0_j_1_1",
+          "to": "lane_j_1_1_s_out",
+          "turn": "right",
+          "signalGroup": "sg_j_1_1_ew_turn"
+        }
+      ]
+    },
+    {
+      "id": "j_1_2",
+      "bounds": {
+        "x": 2660,
+        "y": 1210,
+        "w": 80,
+        "h": 80
+      },
+      "movements": [
+        {
+          "id": "mv_j_1_2_n_straight",
+          "from": "link_j_0_2_j_1_2",
+          "to": "lane_j_1_2_s_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_2_ns_straight"
+        },
+        {
+          "id": "mv_j_1_2_n_right",
+          "from": "link_j_0_2_j_1_2",
+          "to": "link_j_1_2_j_1_1",
+          "turn": "right",
+          "signalGroup": "sg_j_1_2_ns_turn"
+        },
+        {
+          "id": "mv_j_1_2_s_straight",
+          "from": "lane_j_1_2_s_in_0",
+          "to": "link_j_1_2_j_0_2",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_2_ns_straight"
+        },
+        {
+          "id": "mv_j_1_2_s_right",
+          "from": "lane_j_1_2_s_in_1",
+          "to": "lane_j_1_2_e_out",
+          "turn": "right",
+          "signalGroup": "sg_j_1_2_ns_turn"
+        },
+        {
+          "id": "mv_j_1_2_e_straight",
+          "from": "lane_j_1_2_e_in_0",
+          "to": "link_j_1_2_j_1_1",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_2_ew_straight"
+        },
+        {
+          "id": "mv_j_1_2_e_right",
+          "from": "lane_j_1_2_e_in_1",
+          "to": "link_j_1_2_j_0_2",
+          "turn": "right",
+          "signalGroup": "sg_j_1_2_ew_turn"
+        },
+        {
+          "id": "mv_j_1_2_w_straight",
+          "from": "link_j_1_1_j_1_2",
+          "to": "lane_j_1_2_e_out",
+          "turn": "straight",
+          "signalGroup": "sg_j_1_2_ew_straight"
+        },
+        {
+          "id": "mv_j_1_2_w_right",
+          "from": "link_j_1_1_j_1_2",
+          "to": "lane_j_1_2_s_out",
+          "turn": "right",
+          "signalGroup": "sg_j_1_2_ew_turn"
+        }
+      ]
+    }
+  ],
+  "signalGroups": [
+    {
+      "id": "sg_j_0_0_ns_straight",
+      "junction": "j_0_0",
+      "label": "A1 NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_j_0_0_ns_turn",
+      "junction": "j_0_0",
+      "label": "A1 NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_0_ew_straight",
+      "junction": "j_0_0",
+      "label": "A1 EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_0_ew_turn",
+      "junction": "j_0_0",
+      "label": "A1 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_ns_straight",
+      "junction": "j_0_1",
+      "label": "A2 NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_j_0_1_ns_turn",
+      "junction": "j_0_1",
+      "label": "A2 NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_ew_straight",
+      "junction": "j_0_1",
+      "label": "A2 EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_ew_turn",
+      "junction": "j_0_1",
+      "label": "A2 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_2_ns_straight",
+      "junction": "j_0_2",
+      "label": "A3 NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_j_0_2_ns_turn",
+      "junction": "j_0_2",
+      "label": "A3 NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_2_ew_straight",
+      "junction": "j_0_2",
+      "label": "A3 EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_2_ew_turn",
+      "junction": "j_0_2",
+      "label": "A3 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_0_ns_straight",
+      "junction": "j_1_0",
+      "label": "B1 NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_j_1_0_ns_turn",
+      "junction": "j_1_0",
+      "label": "B1 NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_0_ew_straight",
+      "junction": "j_1_0",
+      "label": "B1 EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_0_ew_turn",
+      "junction": "j_1_0",
+      "label": "B1 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_ns_straight",
+      "junction": "j_1_1",
+      "label": "B2 NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_j_1_1_ns_turn",
+      "junction": "j_1_1",
+      "label": "B2 NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_ew_straight",
+      "junction": "j_1_1",
+      "label": "B2 EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_ew_turn",
+      "junction": "j_1_1",
+      "label": "B2 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_2_ns_straight",
+      "junction": "j_1_2",
+      "label": "B3 NS STRAIGHT",
+      "initial": "green"
+    },
+    {
+      "id": "sg_j_1_2_ns_turn",
+      "junction": "j_1_2",
+      "label": "B3 NS TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_2_ew_straight",
+      "junction": "j_1_2",
+      "label": "B3 EW STRAIGHT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_2_ew_turn",
+      "junction": "j_1_2",
+      "label": "B3 EW TURN",
+      "initial": "red"
+    }
+  ],
+  "routes": [
+    {
+      "id": "route_n1_straight",
+      "steps": [
+        "lane_j_0_0_n_in_0",
+        "mv_j_0_0_n_straight",
+        "link_j_0_0_j_1_0",
+        "mv_j_1_0_n_straight",
+        "lane_j_1_0_s_out"
+      ]
+    },
+    {
+      "id": "route_w1_right0",
+      "steps": [
+        "lane_j_0_0_w_in_1",
+        "mv_j_0_0_w_right",
+        "link_j_0_0_j_1_0",
+        "mv_j_1_0_n_straight",
+        "lane_j_1_0_s_out"
+      ]
+    },
+    {
+      "id": "route_w1_right1",
+      "steps": [
+        "lane_j_0_0_w_in_0",
+        "mv_j_0_0_w_straight",
+        "link_j_0_0_j_0_1",
+        "mv_j_0_1_w_right",
+        "link_j_0_1_j_1_1",
+        "mv_j_1_1_n_straight",
+        "lane_j_1_1_s_out"
+      ]
+    },
+    {
+      "id": "route_n3_straight",
+      "steps": [
+        "lane_j_0_2_n_in_0",
+        "mv_j_0_2_n_straight",
+        "link_j_0_2_j_1_2",
+        "mv_j_1_2_n_straight",
+        "lane_j_1_2_s_out"
+      ]
+    },
+    {
+      "id": "route_w2_right0",
+      "steps": [
+        "lane_j_1_0_w_in_1",
+        "mv_j_1_0_w_right",
+        "lane_j_1_0_s_out"
+      ]
+    },
+    {
+      "id": "route_w2_right1",
+      "steps": [
+        "lane_j_1_0_w_in_0",
+        "mv_j_1_0_w_straight",
+        "link_j_1_0_j_1_1",
+        "mv_j_1_1_w_right",
+        "lane_j_1_1_s_out"
+      ]
+    }
+  ],
+  "obstacles": [],
+  "buildings": [
+    {
+      "id": "bld_0",
+      "x": 40,
+      "y": 40,
+      "w": 275,
+      "h": 330,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_1",
+      "x": 345,
+      "y": 40,
+      "w": 275,
+      "h": 330,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_2",
+      "x": 40,
+      "y": 530,
+      "w": 275,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_3",
+      "x": 40,
+      "y": 753,
+      "w": 275,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_4",
+      "x": 40,
+      "y": 977,
+      "w": 275,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_5",
+      "x": 345,
+      "y": 530,
+      "w": 275,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_6",
+      "x": 345,
+      "y": 753,
+      "w": 275,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_7",
+      "x": 345,
+      "y": 977,
+      "w": 275,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_8",
+      "x": 40,
+      "y": 1330,
+      "w": 275,
+      "h": 330,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_9",
+      "x": 345,
+      "y": 1330,
+      "w": 275,
+      "h": 330,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_10",
+      "x": 780,
+      "y": 40,
+      "w": 260,
+      "h": 330,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_11",
+      "x": 1070,
+      "y": 40,
+      "w": 260,
+      "h": 330,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_12",
+      "x": 1360,
+      "y": 40,
+      "w": 260,
+      "h": 330,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_13",
+      "x": 780,
+      "y": 530,
+      "w": 260,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_14",
+      "x": 780,
+      "y": 753,
+      "w": 260,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_15",
+      "x": 780,
+      "y": 977,
+      "w": 260,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_16",
+      "x": 1070,
+      "y": 530,
+      "w": 260,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_17",
+      "x": 1070,
+      "y": 753,
+      "w": 260,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_18",
+      "x": 1070,
+      "y": 977,
+      "w": 260,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_19",
+      "x": 1360,
+      "y": 530,
+      "w": 260,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_20",
+      "x": 1360,
+      "y": 753,
+      "w": 260,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_21",
+      "x": 1360,
+      "y": 977,
+      "w": 260,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_22",
+      "x": 780,
+      "y": 1330,
+      "w": 260,
+      "h": 330,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_23",
+      "x": 1070,
+      "y": 1330,
+      "w": 260,
+      "h": 330,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_24",
+      "x": 1360,
+      "y": 1330,
+      "w": 260,
+      "h": 330,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_25",
+      "x": 1780,
+      "y": 40,
+      "w": 260,
+      "h": 330,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_26",
+      "x": 2070,
+      "y": 40,
+      "w": 260,
+      "h": 330,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_27",
+      "x": 2360,
+      "y": 40,
+      "w": 260,
+      "h": 330,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_28",
+      "x": 1780,
+      "y": 530,
+      "w": 260,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_29",
+      "x": 1780,
+      "y": 753,
+      "w": 260,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_30",
+      "x": 1780,
+      "y": 977,
+      "w": 260,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_31",
+      "x": 2070,
+      "y": 530,
+      "w": 260,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_32",
+      "x": 2070,
+      "y": 753,
+      "w": 260,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_33",
+      "x": 2070,
+      "y": 977,
+      "w": 260,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_34",
+      "x": 2360,
+      "y": 530,
+      "w": 260,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_35",
+      "x": 2360,
+      "y": 753,
+      "w": 260,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_36",
+      "x": 2360,
+      "y": 977,
+      "w": 260,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_37",
+      "x": 1780,
+      "y": 1330,
+      "w": 260,
+      "h": 330,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_38",
+      "x": 2070,
+      "y": 1330,
+      "w": 260,
+      "h": 330,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_39",
+      "x": 2360,
+      "y": 1330,
+      "w": 260,
+      "h": 330,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_40",
+      "x": 2780,
+      "y": 40,
+      "w": 275,
+      "h": 330,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_41",
+      "x": 3085,
+      "y": 40,
+      "w": 275,
+      "h": 330,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_42",
+      "x": 2780,
+      "y": 530,
+      "w": 275,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_43",
+      "x": 2780,
+      "y": 753,
+      "w": 275,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_44",
+      "x": 2780,
+      "y": 977,
+      "w": 275,
+      "h": 193,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_45",
+      "x": 3085,
+      "y": 530,
+      "w": 275,
+      "h": 193,
+      "color": "#6b6558",
+      "windows": 6
+    },
+    {
+      "id": "bld_46",
+      "x": 3085,
+      "y": 753,
+      "w": 275,
+      "h": 193,
+      "color": "#4f5d6b",
+      "windows": 8
+    },
+    {
+      "id": "bld_47",
+      "x": 3085,
+      "y": 977,
+      "w": 275,
+      "h": 193,
+      "color": "#665b63",
+      "windows": 10
+    },
+    {
+      "id": "bld_48",
+      "x": 2780,
+      "y": 1330,
+      "w": 275,
+      "h": 330,
+      "color": "#59606e",
+      "windows": 4
+    },
+    {
+      "id": "bld_49",
+      "x": 3085,
+      "y": 1330,
+      "w": 275,
+      "h": 330,
+      "color": "#6b6558",
+      "windows": 6
+    }
+  ],
+  "lighting": {
+    "preset": "day",
+    "enabled": false,
+    "quality": "low"
+  },
+  "progression": {
+    "order": 3,
+    "blurb": "Four entries, still three exits. Demand starts to outrun what the exits can take.",
+    "teaches": [
+      "triage",
+      "downstream pressure"
+    ],
+    "unlock": {
+      "after": "city_balanced",
+      "medal": "bronze"
+    }
+  },
+  "goal": {
+    "surviveSeconds": 720
+  },
+  "ratings": {
+    "bronze": {
+      "time": 360
+    },
+    "silver": {
+      "time": 540,
+      "earned": 2300,
+      "satisfaction": 0.65
+    },
+    "gold": {
+      "time": 720,
+      "earned": 3600,
+      "satisfaction": 0.8,
+      "maxIncidents": 3
+    }
+  }
+}

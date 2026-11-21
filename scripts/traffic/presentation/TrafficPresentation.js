@@ -10,6 +10,8 @@ import { UI, Theme, world } from "../ui/theme.js";
 import { toCss } from "../ui/themes.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
+const FLOAT_MIN_GAIN = 0.006; // a car worth less than this (about 0.6% of the meter) gets no popup
+const FLOAT_BIG_GAIN = 0.03;
 
 // Phaser-side view of a TrafficSession. Reads ECS state and draws it; owns no
 // simulation state and never writes back into the world. The only way it changes
@@ -63,7 +65,7 @@ export class TrafficPresentation {
     this.worldUi = new SignalControlLayer({
       level: session.level,
       groups: new Map(this.groups.map((e) => [e.id, e.components.SignalGroupComponent])),
-      flow: session.flow,
+      streams: session.streams,
       layer: spriteLayers.fg5,
       onToggle: (groupId) => actions.toggleSignal(groupId),
       isPending: (groupId) => actions.isSignalPending(groupId),
@@ -71,23 +73,15 @@ export class TrafficPresentation {
 
     // Floating payout / event text. Events are only read: nothing here writes to the simulation.
     this.floats = [];
-    this.base = session.sim.economy.perVehicle;
     this.towDelay = session.sim.interventions.tow?.delay ?? 3;
     const events = session.events;
-    events.on(TrafficEvents.CASH_EARNED, (vehicle, amount) => {
-      if (amount <= this.base * 1.3) return; // only released queues are worth a popup
+    // A car that waited a long time and finally moves: show what it was worth
+    events.on(TrafficEvents.SATISFACTION_GAIN, (vehicle, gain) => {
+      if (gain < FLOAT_MIN_GAIN) return;
       const p = vehicle.components.Position;
+      const big = gain >= FLOAT_BIG_GAIN;
       const w = world();
-      this.float(`+$${amount}`, p.x, p.y - 14, amount >= this.base * 5 ? w.cashBig : w.cash, amount >= this.base * 5 ? "800 20px Epilogue, system-ui" : "800 15px Epilogue, system-ui");
-    });
-    events.on(TrafficEvents.FLOW_RELEASE, (stream, release, clean) => {
-      pointAt(stream.lane.path, stream.lane.stopLineS, _p);
-      const w = world();
-      this.float(clean ? `CLEAN RELEASE  +$${release.paid}` : "POOR RELEASE", _p.x, _p.y - 40, clean ? w.cashBig : w.warnText, "800 18px Epilogue, system-ui", 2.2);
-    });
-    events.on(TrafficEvents.FLOW_BROKEN, (reason) => {
-      const c = session.level.junctions[0].bounds;
-      this.float(reason === "timeout" ? "FLOW FADING" : "FLOW BROKEN", c.x + c.w / 2, c.y - 30, world().warnText, "800 18px Epilogue, system-ui", 1.6);
+      this.float(`+${Math.round(gain * 100)}%`, p.x, p.y - 14, big ? w.cashBig : w.cash, big ? "800 20px Epilogue, system-ui" : "800 15px Epilogue, system-ui");
     });
 
     this.debugSystem = new DebugSystem({ testSprite: false });

@@ -15,7 +15,9 @@ import { JunctionSystem } from "../../system/traffic/JunctionSystem.js";
 import { OutputGateSystem } from "../../system/traffic/OutputGateSystem.js";
 import { TrafficStatsSystem } from "../../system/traffic/TrafficStatsSystem.js";
 import { GridlockSystem } from "../../system/traffic/GridlockSystem.js";
-import { FlowSystem } from "../../system/traffic/FlowSystem.js";
+import { StreamSystem } from "../../system/traffic/StreamSystem.js";
+import { IncomeSystem } from "../../system/traffic/IncomeSystem.js";
+import { SatisfactionSystem } from "../../system/traffic/SatisfactionSystem.js";
 import { InterventionSystem } from "../../system/traffic/InterventionSystem.js";
 import { ShiftSystem } from "../../system/traffic/ShiftSystem.js";
 
@@ -68,7 +70,9 @@ export class TrafficSession {
           gridlock: { ...rules.gridlock, ...level.gridlock },
           scoring: { ...rules.scoring, ...level.scoring },
           economy: { ...rules.economy, ...level.economy },
-          flow: { ...rules.flow, ...level.flow },
+          satisfaction: { ...rules.satisfaction, ...level.satisfaction },
+          multiplier: { ...rules.multiplier, ...level.multiplier },
+          pressure: { ...rules.pressure, ...level.pressure },
           interventions: mergeInterventions(rules.interventions, level.interventions),
           goal: level.goal,
           scheduledObstacles: structuredClone(level.obstacles ?? []).sort((a, b) => a.at - b.at),
@@ -92,10 +96,12 @@ export class TrafficSession {
     //   9 obstacles   activate, count down, clear (blocks act as stopped leaders)
     //  10 junctions   box occupancy / blocked-box detection
     //  11 outputs     arrived vehicles leave the network, throughput++
-    //  12 flow        held queues -> releases -> cash and the Flow chain
-    //  13 stats       queues, capacity, load, score
-    //  14 gridlock    a full input queue for long enough ends the level
-    //  15 shift       surviving goal.surviveSeconds completes it
+    //  12 streams     per (signal group, lane): queue, pressure, risk, what a release is worth
+    //  13 satisfaction waiting cars drain the meter, cars that get moving after a wait refill it
+    //  14 income      base income x satisfaction multiplier -> funds
+    //  15 stats       queues, capacity, load, score
+    //  16 gridlock    a full input queue for long enough ends the level
+    //  17 shift       surviving goal.surviveSeconds completes it
     // (presentation runs outside the simulation and only reads it.)
     this.vehicleSystem = new VehicleSystem();
     this.systems = [
@@ -108,7 +114,9 @@ export class TrafficSession {
       new ObstacleSystem(this.vehicleSystem, (id) => this.entities.get(id)),
       new JunctionSystem(),
       new OutputGateSystem(this.vehicleSystem),
-      (this.flow = new FlowSystem()),
+      (this.streams = new StreamSystem()),
+      (this.satisfaction = new SatisfactionSystem()),
+      new IncomeSystem(),
       new TrafficStatsSystem(),
       new GridlockSystem(),
       new ShiftSystem(),
@@ -199,11 +207,11 @@ export class TrafficSession {
       cash: st.cash,
       incidents: st.incidents,
       throughput: st.completed,
-      peakFlow: st.peakFlow,
-      releases: st.releases,
-      cleanReleases: st.cleanReleases,
       biggestRelease: st.biggestRelease,
       towsUsed: st.towsUsed,
+      avgSatisfaction: st.avgSatisfaction,
+      peakSatisfaction: st.peakSatisfaction,
+      minSatisfaction: st.minSatisfaction,
     };
   }
 

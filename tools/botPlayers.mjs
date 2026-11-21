@@ -14,8 +14,8 @@ const GAP = 3.5; // seconds all-red between phases (yellow 2s + clearance)
 
 export function makeBot(kind, phases, opts = {}) {
   const st = { cur: -1, since: 0, gapUntil: 0, next: null, nextCheck: 0 };
-  const queueOf = (s, phase) => s.flow.streams.filter((x) => phase.includes(x.groupId)).reduce((a, x) => a + x.queue, 0);
-  const pressureOf = (s, phase) => Math.max(0, ...s.flow.streams.filter((x) => phase.includes(x.groupId)).map((x) => x.pressure));
+  const queueOf = (s, phase) => s.streams.streams.filter((x) => phase.includes(x.groupId)).reduce((a, x) => a + x.queue, 0);
+  const pressureOf = (s, phase) => Math.max(0, ...s.streams.streams.filter((x) => phase.includes(x.groupId)).map((x) => x.pressure));
   const open = (s, i) => {
     for (const g of phases.flat()) s.setSignal(g, phases[i].includes(g));
     st.cur = i;
@@ -55,8 +55,8 @@ export function makeBot(kind, phases, opts = {}) {
       const target = opts.target ?? 0.4;
       let best = null;
       for (const i of others) {
-        const streams = s.flow.streams.filter((x) => phases[i].includes(x.groupId));
-        const ready = streams.some((x) => x.queue >= Math.max(x.threshold, Math.ceil(x.capacity * target)) || x.pressure >= (opts.danger ?? 0.55));
+        const streams = s.streams.streams.filter((x) => phases[i].includes(x.groupId));
+        const ready = streams.some((x) => x.queue >= Math.max(3, Math.ceil(x.capacity * target)) || x.pressure >= (opts.danger ?? 0.55));
         if (ready && (best === null || queueOf(s, phases[i]) > queueOf(s, phases[best]))) best = i;
       }
       if (best !== null && held >= 6 && cq <= 1) switchTo = best;

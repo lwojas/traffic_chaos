@@ -1,7 +1,7 @@
 import { el, Cell, clock } from "../dom.js";
 
 const MEDAL_GLYPH = { bronze: "★", silver: "★★", gold: "★★★" };
-const KEY_TEXT = { time: (n) => `survive ${clock(n)}`, earned: (n) => `earn $${Math.round(n).toLocaleString("en-US")}`, flow: (n) => `reach FLOW ×${n}`, incidents: (n) => `at most ${n} crash${n === 1 ? "" : "es"}` };
+const KEY_TEXT = { time: (n) => `survive ${clock(n)}`, earned: (n) => `earn $${Math.round(n).toLocaleString("en-US")}`, satisfaction: (n) => `average ${Math.round(n * 100)}% satisfaction`, incidents: (n) => `at most ${n} crash${n === 1 ? "" : "es"}` };
 
 // Centre-of-screen messages: paused hint and the end-of-run result card. The
 // card is the replay hook: it names the medal earned and the single clearest
@@ -45,7 +45,7 @@ export class StatusBanner {
     const lines = [];
     if (!win && m.gridlock) lines.push(`${m.gridlock.gate} could not take traffic.`);
     lines.push(`Survived ${clock(r.time)}  ·  Earned $${Math.round(r.earned).toLocaleString("en-US")}`);
-    lines.push(`Peak FLOW ×${r.peakFlow}  ·  Releases ${r.cleanReleases}/${r.releases} clean  ·  Crashes ${r.incidents}`);
+    lines.push(`Satisfaction avg ${Math.round(r.avgSatisfaction * 100)}%  ·  Best ${Math.round(r.peakSatisfaction * 100)}%  ·  Crashes ${r.incidents}`);
     this.detail.set(lines.join("\n"));
     const result = this.actions.app.lastResult;
     if (!result) return;

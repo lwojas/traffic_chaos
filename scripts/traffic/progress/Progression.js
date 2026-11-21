@@ -54,7 +54,7 @@ export class Progression {
     const previous = this.medal(meta.id);
     if (rank(medal) > rank(previous)) this.data.medals[meta.id] = medal;
     const best = this.data.best[meta.id];
-    if (!best || summary.earned > best.earned) this.data.best[meta.id] = { earned: Math.round(summary.earned), time: Math.round(summary.time), peakFlow: summary.peakFlow };
+    if (!best || summary.earned > best.earned) this.data.best[meta.id] = { earned: Math.round(summary.earned), time: Math.round(summary.time), avgSatisfaction: Math.round(summary.avgSatisfaction * 100) / 100 };
     this.save();
     const after = this.unlockedIds(metas);
     return {

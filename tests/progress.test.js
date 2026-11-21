@@ -7,26 +7,28 @@ import { TrafficGame } from "../scripts/traffic/TrafficGame.js";
 import { validateLevel } from "../scripts/traffic/level/validateLevel.js";
 import { computeSignalControls } from "../scripts/traffic/view/signalControlLayout.js";
 import { HudReadModel } from "../scripts/traffic/view/HudReadModel.js";
+import { networkBalance } from "../scripts/traffic/util/networkBalance.js";
+import { META } from "../tools/levelMeta.mjs";
 import { memoryProvider, gameConfig, firstJunction, level01, clone, quietSession } from "./helpers/fixtures.js";
 import { play, makeBot, withTow } from "../tools/botPlayers.mjs";
 
-const ratings = { bronze: { time: 100 }, silver: { time: 200, earned: 500, flow: 2 }, gold: { time: 300, earned: 900, flow: 3, maxIncidents: 1 } };
-const run = (o) => ({ status: "gridlock", time: 0, earned: 0, peakFlow: 1, incidents: 0, ...o });
+const ratings = { bronze: { time: 100 }, silver: { time: 200, earned: 500, satisfaction: 0.5 }, gold: { time: 300, earned: 900, satisfaction: 0.6, maxIncidents: 1 } };
+const run = (o) => ({ status: "gridlock", time: 0, earned: 0, avgSatisfaction: 0, incidents: 0, ...o });
 
 test("a medal needs every requirement listed for it", () => {
   assert.equal(rateRun(run({ time: 50 }), ratings), null);
   assert.equal(rateRun(run({ time: 120 }), ratings), "bronze");
-  assert.equal(rateRun(run({ time: 250, earned: 400, peakFlow: 5 }), ratings), "bronze", "silver also needs the cash");
-  assert.equal(rateRun(run({ time: 250, earned: 600, peakFlow: 2 }), ratings), "silver");
-  assert.equal(rateRun(run({ time: 300, earned: 950, peakFlow: 3, incidents: 2 }), ratings), "silver", "gold allows at most 1 crash");
-  assert.equal(rateRun(run({ time: 300, earned: 950, peakFlow: 3, incidents: 1, status: "complete" }), ratings), "gold");
+  assert.equal(rateRun(run({ time: 250, earned: 400, avgSatisfaction: 0.9 }), ratings), "bronze", "silver also needs the cash");
+  assert.equal(rateRun(run({ time: 250, earned: 600, avgSatisfaction: 0.55 }), ratings), "silver");
+  assert.equal(rateRun(run({ time: 300, earned: 950, avgSatisfaction: 0.65, incidents: 2 }), ratings), "silver", "gold allows at most 1 crash");
+  assert.equal(rateRun(run({ time: 300, earned: 950, avgSatisfaction: 0.65, incidents: 1, status: "complete" }), ratings), "gold");
   assert.equal(rateRun(run({ time: 10, status: "complete" }), ratings), "bronze", "finishing the shift is never worse than bronze");
 });
 
 test("the result says what is missing for the next medal", () => {
-  const t = nextTargets(run({ time: 250, earned: 400, peakFlow: 1 }), ratings, "bronze");
+  const t = nextTargets(run({ time: 250, earned: 400, avgSatisfaction: 0.1 }), ratings, "bronze");
   assert.equal(t.medal, "silver");
-  assert.deepEqual(t.missing.map((m) => m.key), ["earned", "flow"]);
+  assert.deepEqual(t.missing.map((m) => m.key), ["earned", "satisfaction"]);
   assert.equal(nextTargets(run({}), ratings, "gold").medal, null);
 });
 
@@ -47,7 +49,7 @@ test("maps unlock from medals, medals only improve, and progress persists", () =
   let r = p.record(metas[0], run({ time: 120 }), metas);
   assert.equal(r.medal, "bronze");
   assert.deepEqual(r.unlocked, [], "bronze is not enough for B");
-  r = p.record(metas[0], run({ time: 250, earned: 600, peakFlow: 2 }), metas);
+  r = p.record(metas[0], run({ time: 250, earned: 600, avgSatisfaction: 0.55 }), metas);
   assert.deepEqual(r.unlocked.map((m) => m.id), ["b"]);
   r = p.record(metas[0], run({ time: 120 }), metas);
   assert.equal(p.medal("a"), "silver", "a worse run never lowers a medal");
@@ -107,26 +109,59 @@ test("the teaching level: 2 inputs, one junction, a straight and a right-turn la
   assert.equal(s.sim.status, "running");
   const m = new HudReadModel(s).read();
   assert.equal(m.streams.length, 4);
-  assert.ok(m.flow.steps === gameConfig.simulation.flow.steps.length && m.tow.cost > 0);
+  assert.ok(m.satisfaction.value > 0 && m.satisfaction.multiplier > 0 && m.income.base > 0 && m.tow.cost > 0);
 });
 
+const firstMap = shipped[0];
+const botPhases = META[firstMap.id].botPhases;
+
 test("first level pacing: doing nothing fails early, sensible play lasts the target 8-12 minutes", () => {
-  const level = firstJunction;
-  const phases = [["sg_n_straight","sg_n_turn"], ["sg_w_straight","sg_w_turn"]];
   const seeds = [1, 2, 3];
-  const avg = (make) => seeds.map((seed) => play(level, make(), { seed }).time).reduce((a, b) => a + b, 0) / seeds.length;
-  const idle = avg(() => makeBot("idle", phases));
-  const careful = avg(() => makeBot("greedy", phases));
-  const charger = avg(() => makeBot("charger", phases));
-  assert.ok(idle < 360, `idle ends before 6 min (${idle.toFixed(0)}s)`);
-  assert.ok(careful > 480 && charger > 480, `sensible bots last past 8 min (${careful.toFixed(0)}s, ${charger.toFixed(0)}s)`);
+  const avg = (make) => seeds.map((seed) => play(firstMap, make(), { seed }).time).reduce((a, b) => a + b, 0) / seeds.length;
+  const idle = avg(() => makeBot("idle", botPhases));
+  const careful = avg(() => makeBot("greedy", botPhases));
+  const charger = avg(() => makeBot("charger", botPhases));
+  assert.ok(idle < 420, `idle ends before 7 min (${idle.toFixed(0)}s)`);
+  assert.ok(careful > 540 && charger > 540, `sensible bots last past 9 min (${careful.toFixed(0)}s, ${charger.toFixed(0)}s)`);
   assert.ok(careful > idle + 180);
 });
 
-test("holding and releasing earns more than keeping everything green (the risk/reward is real)", () => {
-  const phases = [["sg_n_straight","sg_n_turn"], ["sg_w_straight","sg_w_turn"]];
-  const sum = (make) => [1, 2, 3].reduce((a, seed) => a + play(firstJunction, make(), { seed, maxSeconds: 420 }).earned, 0);
-  assert.ok(sum(() => makeBot("charger", phases)) > sum(() => makeBot("greedy", phases)) * 1.15);
+test("holding and releasing earns more than only ever cycling: the risk/reward is real", () => {
+  const sum = (make) => [1, 2, 3].reduce((a, seed) => a + play(firstMap, make(), { seed, maxSeconds: 420 }).earned, 0);
+  assert.ok(sum(() => makeBot("charger", botPhases)) > sum(() => makeBot("greedy", botPhases)) * 1.03);
+});
+
+test("the first map is physically large, with more exits than entries, and every level is tuned by gate data", () => {
+  assert.ok(firstMap.map.width >= 2000 && firstMap.map.height >= 1400, "not a single crossroads on a small canvas");
+  assert.ok(firstMap.junctions.length >= 3);
+  assert.equal(firstMap.inputGates.length, 2);
+  assert.equal(firstMap.outputGates.length, 3);
+  assert.ok(firstMap.outputGates.some((g) => g.outflowPerMinute > 0), "at least one exit is a bottleneck");
+  assert.ok(networkBalance(firstMap).pressure < 0.6, "the first map is forgiving");
+});
+
+test("level difficulty rises with the entry/exit ratio on the same network", () => {
+  const byId = Object.fromEntries(shipped.map((l) => [l.id, l]));
+  const [a, b, c] = ["city_balanced", "city_rush", "city_crunch"].map((id) => byId[id]);
+  assert.deepEqual([a, b, c].map((l) => [l.inputGates.length, l.outputGates.length]), [[3, 3], [4, 3], [5, 3]]);
+  assert.deepEqual(a.roads, c.roads, "identical road network");
+  assert.deepEqual(a.junctions, c.junctions, "identical junctions");
+  const p = [a, b, c].map((l) => networkBalance(l).pressure);
+  assert.ok(p[0] < p[1] && p[1] < p[2], `pressure rises ${p.map((x) => x.toFixed(2))}`);
+  assert.ok(p[0] < 0.8 && p[2] > 0.9);
+});
+
+test("network balance reports pressure from demand, exits and their capacity", () => {
+  const nb = networkBalance(firstMap);
+  assert.equal(nb.inputs, 2);
+  assert.equal(nb.outputs, 3);
+  assert.ok(nb.capacity > 0 && nb.demand > 0 && nb.exits.length === 3);
+  const capped = structuredClone(firstMap);
+  for (const g of capped.outputGates) g.outflowPerMinute = 6;
+  assert.ok(networkBalance(capped).pressure > nb.pressure * 2, "tighter exits mean more pressure");
+  const more = structuredClone(firstMap);
+  more.inputGates[0].demand.scale = 3;
+  assert.ok(networkBalance(more).demand > nb.demand);
 });
 
 test("the tow truck is a trade-off: an affordable tow shortens a crash, but cash is finite", () => {

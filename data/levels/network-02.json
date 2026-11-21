@@ -21,23 +21,23 @@
     "shift": [
       {
         "time": 0,
-        "rate": 0.02
-      },
-      {
-        "time": 120,
-        "rate": 0.04
-      },
-      {
-        "time": 300,
         "rate": 0.06
       },
       {
-        "time": 480,
-        "rate": 0.08
+        "time": 90,
+        "rate": 0.1
       },
       {
-        "time": 660,
-        "rate": 0.1
+        "time": 240,
+        "rate": 0.14
+      },
+      {
+        "time": 420,
+        "rate": 0.18
+      },
+      {
+        "time": 600,
+        "rate": 0.22
       }
     ]
   },
@@ -2547,7 +2547,7 @@
     "quality": "low"
   },
   "progression": {
-    "order": 4,
+    "order": 6,
     "blurb": "A 3x2 grid with many gates. Something is always going wrong somewhere else.",
     "teaches": [
       "scanning",
@@ -2563,17 +2563,17 @@
   },
   "ratings": {
     "bronze": {
-      "time": 420
+      "time": 360
     },
     "silver": {
-      "time": 660,
-      "earned": 8000,
-      "flow": 2
+      "time": 540,
+      "earned": 2600,
+      "satisfaction": 0.65
     },
     "gold": {
       "time": 900,
-      "earned": 16000,
-      "flow": 3,
+      "earned": 4200,
+      "satisfaction": 0.78,
       "maxIncidents": 4
     }
   }

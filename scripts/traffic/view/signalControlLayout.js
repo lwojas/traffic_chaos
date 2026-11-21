@@ -13,7 +13,7 @@ import { pointAt } from "../util/geometry.js";
 //   turns      movement types this group makes from that lane ("straight", "right"...)
 //   approach   the approach lane's polyline
 //   routes     polylines of every movement the control releases: approach + junction + exit lane
-// `id` is also the Flow stream id (see FlowSystem), so the world control and the
+// `id` is also the stream id (see StreamSystem), so the world control and the
 // simulation's queue/reward numbers are looked up by the same key.
 export const DEFAULT_PLACEMENT = { size: 46, gap: 4, roadsideMargin: 4 };
 const COMPASS = ["Eastbound", "Southbound", "Westbound", "Northbound"]; // screen space: +y is south

@@ -23,8 +23,10 @@ export class SimulationComponent {
     this.incidents = data.incidents; // { enabled, duration }
     this.gridlock = data.gridlock; // { fullSeconds }
     this.scoring = data.scoring; // { perVehicle, perIncident }
-    this.economy = data.economy; // { perVehicle, startCash }
-    this.flow = data.flow; // see data/game-config.json
+    this.economy = data.economy; // { incomePerSecond, startCash }
+    this.satisfaction = data.satisfaction; // see data/game-config.json
+    this.multiplier = data.multiplier; // { min, max }: income multiplier range over satisfaction 0..1
+    this.pressure = data.pressure; // { riskBands }: how full a stream's holding space must be for each risk band
     this.interventions = data.interventions; // { tow: { cost, costStep, cooldown, delay } }
     this.goal = data.goal ?? null; // { surviveSeconds }: reaching it completes the level
     this.scheduledObstacles = data.scheduledObstacles ?? []; // level events, not yet fired

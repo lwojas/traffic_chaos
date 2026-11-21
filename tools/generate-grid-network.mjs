@@ -12,7 +12,18 @@ import { applyMeta } from "./levelMeta.mjs";
 
 // Variants:  node tools/generate-grid-network.mjs            -> network_02 (3x2 City Grid)
 //            node tools/generate-grid-network.mjs connected  -> network_03 (2x1, two junctions on one road)
-const VARIANT = process.argv[2] === "connected" ? { cols: 2, rows: 1, id: "network_03", name: "Connected Junctions", file: "network-03.json", dx: 900 } : { cols: 3, rows: 2, id: "network_02", name: "City Grid", file: "network-02.json", dx: 1000 };
+//            node tools/generate-grid-network.mjs start      -> first_junction (2x2, 2 entries / 3 exits)
+// `entries` / `exits` (gate names such as W1, N2) make a gate entry-only or exit-only; omitted = every edge arm is both.
+const VARIANTS = {
+  connected: { cols: 2, rows: 1, id: "network_03", name: "Connected Junctions", file: "network-03.json", dx: 900 },
+  start: { cols: 2, rows: 2, id: "first_junction", name: "Mill Town", file: "first-junction.json", dx: 1100, entries: ["W1", "N2"], exits: ["S1", "S2", "W2"] },
+};
+// One network, three levels: only the entry set changes. Exits are always the south edge, so each extra entry is pure added demand.
+const CITY = { cols: 3, rows: 2, dx: 1000, exits: ["S1", "S2", "S3"] };
+VARIANTS.balanced = { ...CITY, id: "city_balanced", name: "Harbour Street", file: "city-balanced.json", entries: ["W1", "N1", "N3"] };
+VARIANTS.rush = { ...CITY, id: "city_rush", name: "Rush Hour", file: "city-rush.json", entries: ["W1", "W2", "N1", "N3"] };
+VARIANTS.crunch = { ...CITY, id: "city_crunch", name: "The Crunch", file: "city-crunch.json", entries: ["W1", "W2", "N1", "N2", "N3"] };
+const VARIANT = VARIANTS[process.argv[2]] ?? { cols: 3, rows: 2, id: "network_02", name: "City Grid", file: "network-02.json", dx: 1000 };
 const COLS = VARIANT.cols, ROWS = VARIANT.rows;
 const X0 = 700, Y0 = 450, DX = VARIANT.dx, DY = 800, HALF = 40;
 const W = X0 * 2 + DX * (COLS - 1), H = Y0 * 2 + DY * (ROWS - 1);
@@ -107,12 +118,14 @@ const ROUTE_WEIGHTS = { straight: 6, right0: 2, right1: 1.5 };
 for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) for (const arm of Object.keys(DIR)) {
   if (neighbour(r, c, arm)) continue;
   const name = gateName(r, c, arm);
-  const J = jid(r, c);
-  outputGates.push({ id: `output_${name.toLowerCase()}`, label: `OUTPUT ${name}`, lane: outLane(r, c, arm) });
+  const isExit = !VARIANT.exits || VARIANT.exits.includes(name);
+  const isEntry = !VARIANT.entries || VARIANT.entries.includes(name);
+  if (isExit) outputGates.push({ id: `output_${name.toLowerCase()}`, label: `OUTPUT ${name}`, lane: outLane(r, c, arm) });
+  if (!isEntry) continue;
   const gate = { id: `input_${name.toLowerCase()}`, label: `INPUT ${name}`, lanes: laneIds.inbound[`${r},${c},${arm}`], queueCapacity: 12, demand: { curve: "rush-hour" }, routes: [] };
   for (const [kind, turnAt] of [["straight", -1], ["right0", 0], ["right1", 1]]) {
     const steps = [];
-    let cr = r, cc = c, a = arm, hop = 0;
+    let cr = r, cc = c, a = arm, hop = 0, lastArm = name;
     for (;;) {
       const turn = hop === turnAt ? "right" : "straight";
       if (hop === 0) steps.push(inboundLane(cr, cc, a, turn));
@@ -120,12 +133,13 @@ for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) for (const arm of 
       const exitArm = turn === "right" ? RIGHT_OF[a] : OPP[a];
       steps.push(outLane(cr, cc, exitArm));
       const nb = neighbour(cr, cc, exitArm);
-      if (!nb) break;
+      if (!nb) { lastArm = gateName(cr, cc, exitArm); break; }
       [cr, cc] = nb;
       a = OPP[exitArm];
       hop++;
     }
     if (turnAt >= 0 && hop < turnAt) continue; // route is shorter than the turn index: skip
+    if (VARIANT.exits && !VARIANT.exits.includes(lastArm)) continue; // it would leave through an arm that is not an exit
     const id = `route_${name.toLowerCase()}_${kind}`;
     routes.push({ id, steps });
     gate.routes.push({ route: id, weight: ROUTE_WEIGHTS[kind] });

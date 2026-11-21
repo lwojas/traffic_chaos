@@ -10,7 +10,7 @@ export const gameConfig = read("game-config.json");
 const readFixture = (p) => JSON.parse(readFileSync(new URL(`../fixtures/${p}`, import.meta.url), "utf8"));
 export const level01 = readFixture("network-01.json");
 export const level02 = readFixture("network-02.json");
-export const firstJunction = read("levels/first-junction.json");
+export const firstJunction = readFixture("first-junction.json");
 export const clone = (o) => structuredClone(o);
 
 export function memoryProvider(levels = [firstJunction, level02, level01]) {

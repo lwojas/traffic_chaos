@@ -2,7 +2,7 @@ import { pointAt } from "../util/geometry.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
 
-// How the network is holding up, as a word and a 0..3 band (same bands as Flow
+// How the network is holding up, as a word and a 0..3 band (same bands as stream
 // risk). A label over two authoritative stats, not a second rule: the worse of
 // "fullest input queue" and "share of lanes lost to incidents".
 export const STABILITY = ["STABLE", "MODERATE", "STRAINED", "CRITICAL"];
@@ -34,8 +34,8 @@ export class HudReadModel {
       const pos = pointAt(lane.path, Math.max(0, lane.length - 40), { x: 0, y: 0, angle: 0 });
       return { gate: g, x: pos.x, y: pos.y };
     });
-    // Flow streams are static topology too: where each one's stop line and queue tail are
-    this.streams = session.flow.streams;
+    // Streams are static topology too: where each one's stop line and queue tail are
+    this.streams = session.streams.streams;
     // Obstacles come and go: the manager replaces `.entities`, so read it fresh
     this.obstacleSystem = {};
     this.obstacleSystem.entities = em.registerSystem(this.obstacleSystem, ["ObstacleComponent"]);
@@ -61,7 +61,6 @@ export class HudReadModel {
       speed: sim.speed,
       time: st.time,
       goalSeconds: s.level.goal?.surviveSeconds ?? 0,
-      perVehicle: sim.economy.perVehicle,
       score: st.score,
       throughput: st.completed,
       throughputPerMin: st.throughputPerMin,
@@ -75,7 +74,8 @@ export class HudReadModel {
       incidentsTotal: st.incidents,
       cash: st.cash,
       earned: st.earned,
-      flow: this.readFlow(),
+      income: { rate: st.incomeRate, base: st.baseIncome, multiplier: st.satMultiplier },
+      satisfaction: this.readSatisfaction(),
       streams: this.readStreams(),
       tow: s.interventions.describe("tow"),
       gates,
@@ -85,13 +85,22 @@ export class HudReadModel {
     };
   }
 
-  readFlow() {
-    const f = this.session.flow;
-    const steps = f.cfg.steps;
-    return { multiplier: f.multiplier, step: f.chain.index, steps: steps.length, timeLeft: f.chainTimeLeft, timeTotal: f.cfg.chainSeconds, peak: this.session.stats.peakFlow };
+  // Satisfaction, the multiplier it sets and why it is moving. `waiting` is cars held past the free
+  // grace period (what drains it); `recovering` is recent release gain in meter points (what refills it).
+  readSatisfaction() {
+    const st = this.session.stats;
+    const v = st.satisfaction;
+    return {
+      value: v,
+      multiplier: st.satMultiplier,
+      band: v < 0.25 ? 2 : v < 0.45 ? 1 : 0, // 0 healthy, 1 warning, 2 critical
+      waiting: st.satWaiting,
+      drain: st.satDrain,
+      recovering: Math.round((st.satRecent + st.satPool) * 100),
+    };
   }
 
-  // Per Flow stream: where it is and how loaded. The minimap uses these for pressure markers.
+  // Per stream: where it is and how loaded. The minimap uses these for pressure markers.
   readStreams() {
     return this.streams.map((s) => {
       pointAt(s.lane.path, s.lane.stopLineS, _p);
@@ -99,7 +108,7 @@ export class HudReadModel {
       const y = _p.y;
       const slot = s.lane.length / s.capacity;
       pointAt(s.lane.path, Math.max(0, s.lane.stopLineS - s.queue * slot), _p);
-      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked, multiplier: s.multiplier, potential: s.potential };
+      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked, waitAvg: s.waitAvg, gain: s.gain };
     });
   }
 

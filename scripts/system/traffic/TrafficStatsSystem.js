@@ -39,7 +39,7 @@ export class TrafficStatsSystem extends System {
     events.on(TrafficEvents.ENTRY_BLOCKED, () => this.stats.blockedEntries++);
     events.on(TrafficEvents.JUNCTION_BLOCKED, () => this.stats.blockedJunctionEvents++);
     // The bus warns when an event has no listener; these are emitted for presentation/UI to use
-    for (const name of [TrafficEvents.VEHICLE_REMOVED, TrafficEvents.OBSTACLE_STARTED, TrafficEvents.OBSTACLE_CLEARED, TrafficEvents.GRIDLOCK]) events.on(name, () => {});
+    for (const name of [TrafficEvents.VEHICLE_REMOVED, TrafficEvents.OBSTACLE_STARTED, TrafficEvents.OBSTACLE_CLEARED, TrafficEvents.GRIDLOCK, TrafficEvents.TOW_CALLED]) events.on(name, () => {});
   }
 
   update(dt) {
@@ -121,6 +121,9 @@ export class TrafficStatsSystem extends System {
     s.inputQueued = queued;
     s.inputCapacity = capacity;
     s.demandRate = rate;
+
+    // Biggest single release: the most satisfaction a 3 s window of releases paid
+    if (s.satRecent > s.biggestRelease) s.biggestRelease = s.satRecent;
 
     s.score = s.completed * sim.scoring.perVehicle - s.incidents * sim.scoring.perIncident;
   }

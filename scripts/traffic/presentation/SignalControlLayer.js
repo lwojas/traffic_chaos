@@ -2,7 +2,7 @@ import { drawSignalControl, drawRouteHighlight, drawLaneGauge } from "./signalCo
 import { UI, Theme, world, signalTokens, riskHex } from "../ui/theme.js";
 import { computeSignalControls } from "../view/signalControlLayout.js";
 import { buildPath, pointAt } from "../util/geometry.js";
-import { RISK_NAMES } from "../util/flowMath.js";
+import { RISK_NAMES } from "../util/pressureMath.js";
 import { LightState } from "../../components/traffic/SignalGroupComponent.js";
 
 const TURN_WORDS = { straight: "straight on", right: "turning right", left: "turning left", uturn: "U-turn" };
@@ -12,10 +12,10 @@ const FLASH_SECONDS = 0.45;
 // its stop line, so it moves with the camera because it lives in the world
 // layer, not because anything repositions it.
 //
-//   simulation (SignalGroupComponent.state, Flow streams) --read-->  control appearance
+//   simulation (SignalGroupComponent.state, streams) --read-->  control appearance
 //   pointer press on a control                            --calls-->  onToggle(groupId)
 //
-// A control is one Flow stream (same id as `FlowSystem` streams), so the queue
+// A control is one stream (same id as `StreamSystem` streams), so the queue
 // count, risk ring and "x2.4" payout it shows are the simulation's own numbers.
 // Hovering a control paints the lane and junction path it governs, so the
 // question "what does this button do?" is answered on the road itself.
@@ -25,11 +25,11 @@ const FLASH_SECONDS = 0.45;
 // Hit-testing is done in world coordinates (by the viewport input router, via
 // pick()), so the same code path works at any camera position.
 export class SignalControlLayer {
-  constructor({ level, groups, flow, layer, onToggle, isPending = () => false, style = UI.signalControl }) {
+  constructor({ level, groups, streams, layer, onToggle, isPending = () => false, style = UI.signalControl }) {
     this.style = style;
     this.onToggle = onToggle;
     this.isPending = isPending;
-    this.streams = new Map(flow.streams.map((s) => [s.id, s]));
+    this.streams = new Map(streams.streams.map((s) => [s.id, s]));
     this.controls = computeSignalControls(level, undefined, style)
       .map((def) => ({
         ...def,
@@ -146,8 +146,7 @@ export class SignalControlLayer {
 
   updateLabels(c, s) {
     const { label, risk } = this.labels.get(c);
-    const mult = s.multiplier > 1.05 ? ` ×${s.multiplier.toFixed(1)}` : "";
-    const text = s.queue > 0 ? `${s.queue}${mult}` : "";
+    const text = s.queue > 0 ? `${s.queue}` : "";
     if (label.text !== text) label.text = text;
     label.x = c.x;
     label.y = c.y + this.style.size / 2 - 7;
@@ -167,7 +166,7 @@ export class SignalControlLayer {
     const state = h.group.state;
     const turn = TURN_WORDS[h.turns[0]] ?? h.turns[0];
     const lines = [`${h.direction.toUpperCase()} · ${turn}`, `${s.queue} waiting · ${s.blocked ? "BLOCKED" : RISK_NAMES[s.risk]}`];
-    if (s.queue >= 1) lines.push(s.potential > 0 ? `FLOW ×${s.multiplier.toFixed(1)} → ≈ $${s.potential}` : "no payout while blocked");
+    if (s.queue >= 1) lines.push(s.gain > 0 ? `waited ${Math.round(s.waitAvg)}s → release ≈ +${Math.round(s.gain * 100)}%` : s.blocked ? "no recovery while blocked" : `waited ${Math.round(s.waitAvg)}s`);
     lines.push(state === LightState.GREEN || h.group.wantGreen ? "click to HOLD" : "click to RELEASE");
     const text = lines.join("\n");
     if (this.tip.text !== text) this.tip.text = text;
