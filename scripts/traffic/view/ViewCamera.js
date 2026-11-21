@@ -48,11 +48,13 @@ export class ViewCamera {
     return Math.max(0, this.world.h - this.viewport.h);
   }
 
+  // An axis where the world is smaller than the viewport is centred (negative
+  // offset) and cannot pan; otherwise the camera stays inside the world.
   clampX(x) {
-    return Math.min(Math.max(x, 0), this.maxX());
+    return this.world.w < this.viewport.w ? (this.world.w - this.viewport.w) / 2 : Math.min(Math.max(x, 0), this.maxX());
   }
   clampY(y) {
-    return Math.min(Math.max(y, 0), this.maxY());
+    return this.world.h < this.viewport.h ? (this.world.h - this.viewport.h) / 2 : Math.min(Math.max(y, 0), this.maxY());
   }
 
   clamp() {

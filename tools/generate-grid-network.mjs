@@ -156,8 +156,8 @@ for (let i = 0; i < xs.length - 1; i += 2) for (let k = 0; k < ys.length - 1; k 
 }
 
 const roads = [];
-for (let c = 0; c < COLS; c++) roads.push({ id: `road_v${c}`, points: [[X0 + c * DX, 0], [X0 + c * DX, H]], width: HALF * 2 });
-for (let r = 0; r < ROWS; r++) roads.push({ id: `road_h${r}`, points: [[0, Y0 + r * DY], [W, Y0 + r * DY]], width: HALF * 2 });
+for (let c = 0; c < COLS; c++) roads.push({ id: `road_v${c}`, name: ["Harbour Street", "Station Avenue", "Orchard Way"][c % 3], points: [[X0 + c * DX, 0], [X0 + c * DX, H]], width: HALF * 2 });
+for (let r = 0; r < ROWS; r++) roads.push({ id: `road_h${r}`, name: ["Quarry Road", "Canal Street"][r % 2], points: [[0, Y0 + r * DY], [W, Y0 + r * DY]], width: HALF * 2 });
 
 const level = {
   schemaVersion: 2,

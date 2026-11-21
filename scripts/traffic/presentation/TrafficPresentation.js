@@ -25,6 +25,7 @@ export class TrafficPresentation {
 
     initialiseSpriteLayers();
     game.world.setBounds(0, 0, map.width, map.height);
+    game.camera.bounds = null; // ViewCamera owns clamping, and centres a world smaller than the screen
     game.stage.backgroundColor = toCss(world().ground);
     this.syncCamera();
 
@@ -111,23 +112,29 @@ export class TrafficPresentation {
     this.staticObjs = [g];
     const map = level.map;
 
-    // Ground pattern: paper dots (Day/Night) or a circuit grid (Cyberpunk)
+    // Ground pattern: paper dots (Day/Night) or a circuit grid (Cyberpunk). It
+    // runs past the map edge so a map smaller than the screen sits on the table.
+    const M = 640;
     if (w.pattern === "dots") {
       g.beginFill(w.patternColor, w.patternAlpha);
-      for (let x = 16; x < map.width; x += 32) for (let y = 16; y < map.height; y += 32) g.drawCircle(x, y, 2.4);
+      for (let x = -M + 16; x < map.width + M; x += 32) for (let y = -M + 16; y < map.height + M; y += 32) g.drawCircle(x, y, 2.4);
       g.endFill();
     } else if (w.pattern === "grid") {
       g.lineStyle(1, w.patternColor, w.patternAlpha);
-      for (let x = 0; x <= map.width; x += 40) {
-        g.moveTo(x, 0);
-        g.lineTo(x, map.height);
+      for (let x = -M; x <= map.width + M; x += 40) {
+        g.moveTo(x, -M);
+        g.lineTo(x, map.height + M);
       }
-      for (let y = 0; y <= map.height; y += 40) {
-        g.moveTo(0, y);
-        g.lineTo(map.width, y);
+      for (let y = -M; y <= map.height + M; y += 40) {
+        g.moveTo(-M, y);
+        g.lineTo(map.width + M, y);
       }
       g.lineStyle(0);
     }
+    // The playable board: a faint edge so it reads as the map, not an empty screen
+    g.lineStyle(2, w.buildingEdge, 0.6);
+    g.drawRect(0, 0, map.width, map.height);
+    g.lineStyle(0);
 
     // Buildings: tabletop blocks. The theme sets their colour, not the level.
     for (const b of level.buildings ?? []) {
@@ -178,19 +185,9 @@ export class TrafficPresentation {
     // Stop lines at the end of approach lanes (recoloured by syncLights)
     g.lineStyle(3, w.stopLine, 1);
     for (const { lane } of this.stopLines) this.line(g, lane, lane.stopLineS, 17);
-    // Gates: a disc where traffic enters, a bar where it leaves, each with its stamped label
-    const label = (text, x, y) => {
-      const t = game.add.text(x, y, text, { font: "700 10px 'Space Grotesk', system-ui", fill: toCss(w.stopLine) });
-      t.fill = w.labelText;
-      t.alpha = 0.55;
-      t.anchor.setTo(0.5, 0.5);
-      t.letterSpacing = 1;
-      spriteLayers.bg0.add(t);
-      this.staticObjs.push(t);
-    };
+    // Gates: a disc where traffic enters, a bar where it leaves
     for (const e of this.inputGates) {
-      const gate = e.components.InputGateComponent;
-      for (const laneEntity of gate.lanes) {
+      for (const laneEntity of e.components.InputGateComponent.lanes) {
         const lane = laneEntity.components.LaneComponent;
         pointAt(lane.path, 8, _p);
         g.lineStyle(w.lightGlow > 0 ? 3 : 0, w.inputGate, 0.35);
@@ -198,9 +195,6 @@ export class TrafficPresentation {
         g.drawCircle(_p.x, _p.y, 12);
         g.endFill();
       }
-      const first = gate.lanes[0].components.LaneComponent;
-      pointAt(first.path, 8, _p);
-      if (gate.label) label(gate.label.toUpperCase(), _p.x + Math.cos(_p.angle) * 74 - Math.sin(_p.angle) * 36, _p.y + Math.sin(_p.angle) * 74 + Math.cos(_p.angle) * 36);
     }
     g.lineStyle(5, w.outputGate, 1);
     for (const e of this.outputGates) {
@@ -208,7 +202,36 @@ export class TrafficPresentation {
       this.line(g, lane, lane.length - 3, 17);
     }
     g.lineStyle(0);
+    for (const r of level.roads ?? []) if (r.name) this.roadName(r);
     this.staticGfx = g;
+  }
+
+  // Street name set beside the road, along its direction, like a map label.
+  // Placed on the upper/left side, a little in from the road's start, text kept upright.
+  roadName(r) {
+    const [x0, y0] = r.points[0];
+    const [x1, y1] = r.points[r.points.length - 1];
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    if (len < 1) return;
+    const dx = (x1 - x0) / len;
+    const dy = (y1 - y0) / len;
+    let angle = Math.atan2(dy, dx);
+    if (Math.cos(angle) < -1e-6 || (Math.abs(Math.cos(angle)) < 1e-6 && angle > 0)) angle += Math.PI; // upright; vertical reads bottom-to-top
+    let nx = -dy;
+    let ny = dx;
+    if (ny > 1e-6 || (Math.abs(ny) < 1e-6 && nx > 0)) {
+      nx = -nx;
+      ny = -ny;
+    }
+    const along = Math.min(150, len * 0.25);
+    const off = r.width / 2 + 16;
+    const w = world();
+    const t = game.add.text(x0 + dx * along + nx * off, y0 + dy * along + ny * off, r.name.toUpperCase(), { font: "700 11px 'Space Grotesk', system-ui", fill: w.labelText });
+    t.anchor.setTo(0.5, 0.5);
+    t.alpha = 0.6;
+    t.rotation = angle;
+    spriteLayers.bg0.add(t);
+    this.staticObjs.push(t);
   }
 
   // Theme changed: swap the ground, repaint the static layer, rebuild car textures

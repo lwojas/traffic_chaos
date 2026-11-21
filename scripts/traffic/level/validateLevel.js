@@ -86,6 +86,7 @@ export function validateLevel(level, options = {}) {
     claim(`roads[${i}]`, r?.id, ids.roads);
     checkPoints(`roads[${i}].points`, r?.points);
     if (!(r?.width > 0)) err(`roads[${i}].width`, "must be > 0");
+    if (r?.name !== undefined && typeof r.name !== "string") err(`roads[${i}].name`, "must be a string");
   });
   buildings.forEach((b, i) => {
     claim(`buildings[${i}]`, b?.id);

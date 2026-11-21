@@ -48,7 +48,7 @@ export class VehicleTextures {
     const braking = mode === 1;
     const L = Math.round(type.length);
     const W = Math.round(type.width);
-    const pad = v.glow > 0 ? 9 : v.shadow > 0 ? 5 : 1;
+    const pad = v.glow > 0 ? 9 : v.shadow > 0 ? 7 : 1;
     const bmd = game.make.bitmapData(L + pad * 2, W + pad * 2);
     const c = bmd.ctx;
     const body = this.bodyColor(type);
@@ -61,8 +61,8 @@ export class VehicleTextures {
       c.shadowBlur = 8;
     } else if (v.shadow > 0) {
       c.shadowColor = `rgba(50, 48, 42, ${v.shadow})`;
-      c.shadowBlur = 3;
-      c.shadowOffsetY = 2;
+      c.shadowBlur = 4;
+      c.shadowOffsetY = 3;
     }
     capsule(c, pad, pad, L, W, r);
     c.fillStyle = v.glow > 0 ? "#07080d" : body; // neon cars are dark bodies with a bright edge

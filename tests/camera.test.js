@@ -16,10 +16,14 @@ test("camera clamps to the world bounds on every move", () => {
   assert.equal(c.x, 0);
 });
 
-test("a world smaller than the viewport pins the camera at the origin", () => {
+test("a world smaller than the viewport is centred and cannot pan", () => {
   const c = cam({ w: 800, h: 600 });
+  const centred = [c.clampX(0), c.clampY(0)];
   c.centerOn(400, 300);
-  assert.deepEqual([c.x, c.y], [0, 0]);
+  assert.deepEqual([c.x, c.y], centred);
+  assert.ok(c.x < 0 && c.y < 0);
+  c.panBy(500, 500);
+  assert.deepEqual([c.x, c.y], centred);
 });
 
 test("centerOn centres, and clamps near the edges", () => {

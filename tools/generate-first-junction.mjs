@@ -62,8 +62,8 @@ const level = {
   gridlock: { fullSeconds: 8 },
   incidents: { duration: 16 },
   roads: [
-    { id: "road_ns", points: [[CX, 0], [CX, H]], width: HALF * 2 },
-    { id: "road_ew", points: [[0, CY], [W, CY]], width: HALF * 2 },
+    { id: "road_ns", name: "Mill Lane", points: [[CX, 0], [CX, H]], width: HALF * 2 },
+    { id: "road_ew", name: "Quarry Road", points: [[0, CY], [W, CY]], width: HALF * 2 },
   ],
   lanes,
   inputGates: [

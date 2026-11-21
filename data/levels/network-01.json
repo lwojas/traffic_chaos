@@ -54,6 +54,7 @@
   "roads": [
     {
       "id": "road_ns",
+      "name": "Mill Lane",
       "points": [
         [
           640,
@@ -68,6 +69,7 @@
     },
     {
       "id": "road_ew",
+      "name": "Quarry Road",
       "points": [
         [
           0,
