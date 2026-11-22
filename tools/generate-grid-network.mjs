@@ -12,11 +12,11 @@ import { applyMeta } from "./levelMeta.mjs";
 
 // Variants:  node tools/generate-grid-network.mjs            -> network_02 (3x2 City Grid)
 //            node tools/generate-grid-network.mjs connected  -> network_03 (2x1, two junctions on one road)
-//            node tools/generate-grid-network.mjs start      -> first_junction (2x2, 2 entries / 3 exits)
+//            node tools/generate-grid-network.mjs start      -> first_junction (2x2, 3 entries / 1 exit)
 // `entries` / `exits` (gate names such as W1, N2) make a gate entry-only or exit-only; omitted = every edge arm is both.
 const VARIANTS = {
   connected: { cols: 2, rows: 1, id: "network_03", name: "Connected Junctions", file: "network-03.json", dx: 900 },
-  start: { cols: 2, rows: 2, id: "first_junction", name: "Mill Town", file: "first-junction.json", dx: 1100, entries: ["W1", "N2"], exits: ["S1", "S2", "W2"] },
+  start: { cols: 2, rows: 2, id: "first_junction", name: "Mill Town", file: "first-junction.json", dx: 1100, entries: ["W1", "N2", "W2"], exits: ["S2"] },
 };
 // One network, three levels: only the entry set changes. Exits are always the south edge, so each extra entry is pure added demand.
 const CITY = { cols: 3, rows: 2, dx: 1000, exits: ["S1", "S2", "S3"] };

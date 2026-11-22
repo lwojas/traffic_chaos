@@ -115,24 +115,24 @@ test("the teaching level: 2 inputs, one junction, a straight and a right-turn la
 const firstMap = shipped[0];
 const botPhases = META[firstMap.id].botPhases;
 
-test("first level pacing: doing nothing fails early, sensible play lasts the target 8-12 minutes", () => {
+test("first level pacing: the first map is under constant pressure, doing nothing fails fastest, bots (weaker than a human) last a few minutes", () => {
   const seeds = [1, 2, 3];
   const avg = (make) => seeds.map((seed) => play(firstMap, make(), { seed }).time).reduce((a, b) => a + b, 0) / seeds.length;
   const idle = avg(() => makeBot("idle", botPhases));
   const careful = avg(() => makeBot("greedy", botPhases));
   const charger = avg(() => makeBot("charger", botPhases));
-  assert.ok(idle < 420, `idle ends before 7 min (${idle.toFixed(0)}s)`);
-  assert.ok(careful > 540 && charger > 540, `sensible bots last past 9 min (${careful.toFixed(0)}s, ${charger.toFixed(0)}s)`);
-  assert.ok(careful > idle + 180);
+  assert.ok(idle < 180, `idle ends before 3 min (${idle.toFixed(0)}s)`);
+  assert.ok(careful > 120 && charger > 120, `sensible bots outlast idle play (${careful.toFixed(0)}s, ${charger.toFixed(0)}s)`);
+  assert.ok(careful > idle);
 });
 
-test("the first map is physically large, with more exits than entries, and every level is tuned by gate data", () => {
+test("the first map is physically large, with a single exit, and every level is tuned by gate data", () => {
   assert.ok(firstMap.map.width >= 2000 && firstMap.map.height >= 1400, "not a single crossroads on a small canvas");
   assert.ok(firstMap.junctions.length >= 3);
-  assert.equal(firstMap.inputGates.length, 2);
-  assert.equal(firstMap.outputGates.length, 3);
-  assert.ok(firstMap.outputGates.some((g) => g.outflowPerMinute > 0), "at least one exit is a bottleneck");
-  assert.ok(networkBalance(firstMap).pressure < 0.6, "the first map is forgiving");
+  assert.equal(firstMap.inputGates.length, 3);
+  assert.equal(firstMap.outputGates.length, 1);
+  assert.ok(firstMap.outputGates.every((g) => !g.outflowPerMinute), "the first exit is instant: cars vanish at the gate, no discharge cap");
+  assert.ok(networkBalance(firstMap).pressure > 0.8, "the first map is pressured from the start: waiting does not win");
 });
 
 test("level difficulty rises with the entry/exit ratio on the same network", () => {
@@ -148,9 +148,9 @@ test("level difficulty rises with the entry/exit ratio on the same network", () 
 
 test("network balance reports pressure from demand, exits and their capacity", () => {
   const nb = networkBalance(firstMap);
-  assert.equal(nb.inputs, 2);
-  assert.equal(nb.outputs, 3);
-  assert.ok(nb.capacity > 0 && nb.demand > 0 && nb.exits.length === 3);
+  assert.equal(nb.inputs, 3);
+  assert.equal(nb.outputs, 1);
+  assert.ok(nb.capacity > 0 && nb.demand > 0 && nb.exits.length === 1);
   const capped = structuredClone(firstMap);
   for (const g of capped.outputGates) g.outflowPerMinute = 6;
   assert.ok(networkBalance(capped).pressure > nb.pressure * 2, "tighter exits mean more pressure");

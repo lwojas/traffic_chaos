@@ -21,23 +21,23 @@
     "shift": [
       {
         "time": 0,
-        "rate": 0.05
-      },
-      {
-        "time": 90,
-        "rate": 0.08
-      },
-      {
-        "time": 240,
-        "rate": 0.12
-      },
-      {
-        "time": 420,
-        "rate": 0.16
-      },
-      {
-        "time": 600,
         "rate": 0.2
+      },
+      {
+        "time": 120,
+        "rate": 0.24
+      },
+      {
+        "time": 300,
+        "rate": 0.28
+      },
+      {
+        "time": 480,
+        "rate": 0.32
+      },
+      {
+        "time": 660,
+        "rate": 0.36
       }
     ]
   },
@@ -685,10 +685,6 @@
       },
       "routes": [
         {
-          "route": "route_w1_right0",
-          "weight": 2
-        },
-        {
           "route": "route_w1_right1",
           "weight": 1.5
         }
@@ -709,9 +705,23 @@
         {
           "route": "route_n2_straight",
           "weight": 6
-        },
+        }
+      ]
+    },
+    {
+      "id": "input_w2",
+      "label": "INPUT W2",
+      "lanes": [
+        "lane_j_1_0_w_in_0",
+        "lane_j_1_0_w_in_1"
+      ],
+      "queueCapacity": 12,
+      "demand": {
+        "curve": "shift"
+      },
+      "routes": [
         {
-          "route": "route_n2_right1",
+          "route": "route_w2_right1",
           "weight": 1.5
         }
       ]
@@ -719,20 +729,9 @@
   ],
   "outputGates": [
     {
-      "id": "output_s1",
-      "label": "OUTPUT S1",
-      "lane": "lane_j_1_0_s_out"
-    },
-    {
-      "id": "output_w2",
-      "label": "OUTPUT W2",
-      "lane": "lane_j_1_0_w_out"
-    },
-    {
       "id": "output_s2",
       "label": "OUTPUT S2",
-      "lane": "lane_j_1_1_s_out",
-      "outflowPerMinute": 14
+      "lane": "lane_j_1_1_s_out"
     }
   ],
   "junctions": [
@@ -1105,16 +1104,6 @@
   ],
   "routes": [
     {
-      "id": "route_w1_right0",
-      "steps": [
-        "lane_j_0_0_w_in_1",
-        "mv_j_0_0_w_right",
-        "link_j_0_0_j_1_0",
-        "mv_j_1_0_n_straight",
-        "lane_j_1_0_s_out"
-      ]
-    },
-    {
       "id": "route_w1_right1",
       "steps": [
         "lane_j_0_0_w_in_0",
@@ -1137,15 +1126,13 @@
       ]
     },
     {
-      "id": "route_n2_right1",
+      "id": "route_w2_right1",
       "steps": [
-        "lane_j_0_1_n_in_0",
-        "mv_j_0_1_n_straight",
-        "link_j_0_1_j_1_1",
-        "mv_j_1_1_n_right",
-        "link_j_1_1_j_1_0",
-        "mv_j_1_0_e_straight",
-        "lane_j_1_0_w_out"
+        "lane_j_1_0_w_in_0",
+        "mv_j_1_0_w_straight",
+        "link_j_1_0_j_1_1",
+        "mv_j_1_1_w_right",
+        "lane_j_1_1_s_out"
       ]
     }
   ],
@@ -1519,7 +1506,7 @@
   },
   "progression": {
     "order": 1,
-    "blurb": "Two entries, three exits. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.",
+    "blurb": "Three entries, one exit. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.",
     "teaches": [
       "signals",
       "queues",

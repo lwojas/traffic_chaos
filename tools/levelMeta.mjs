@@ -9,17 +9,16 @@ const ramp = (pts) => ({ shift: pts.map(([time, rate]) => ({ time, rate })) });
 export const META = {
   first_junction: {
     name: "Mill Town",
-    progression: { order: 1, blurb: "Two entries, three exits. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.", teaches: ["signals", "queues", "congestion"] },
-    demandCurves: ramp([[0, 0.05], [90, 0.08], [240, 0.12], [420, 0.16], [600, 0.2]]),
+    progression: { order: 1, blurb: "Three entries, one exit. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.", teaches: ["signals", "queues", "congestion"] },
+    demandCurves: ramp([[0, 0.2], [120, 0.24], [300, 0.28], [480, 0.32], [660, 0.36]]),
     curve: "shift",
     goal: { surviveSeconds: 720 },
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 4000 }, gold: { time: 720, score: 7000, maxIncidents: 3 } },
     gridlock: { fullSeconds: 10 },
     incidents: { duration: 14 },
-    inputs: { input_w1: { queueCapacity: 14 }, input_n2: { queueCapacity: 8 } },
-    outputs: { output_s2: { outflowPerMinute: 14 } },
-    // Playtest bots only (not written to the level): two exclusive phases; the one real conflict is the merge at j_0_1
-    botPhases: [["sg_j_0_0_ew_straight", "sg_j_0_0_ew_turn", "sg_j_0_1_ew_turn", "sg_j_1_0_ns_straight", "sg_j_1_0_ew_straight", "sg_j_1_1_ns_straight", "sg_j_1_1_ns_turn"], ["sg_j_0_0_ew_straight", "sg_j_0_0_ew_turn", "sg_j_0_1_ns_straight", "sg_j_1_0_ns_straight", "sg_j_1_0_ew_straight", "sg_j_1_1_ns_straight", "sg_j_1_1_ns_turn"]],
+    inputs: { input_w1: { queueCapacity: 14 }, input_n2: { queueCapacity: 8 }, input_w2: { queueCapacity: 12 } },
+    // Playtest bots only (not written to the level): one phase per entry; the merges are at j_0_1 and j_1_1
+    botPhases: [["sg_j_0_1_ns_straight", "sg_j_1_1_ns_straight"], ["sg_j_0_0_ew_straight", "sg_j_0_1_ew_turn", "sg_j_1_1_ns_straight"], ["sg_j_1_0_ew_straight", "sg_j_1_1_ew_turn"]],
   },
   city_balanced: {
     name: "Harbour Street",

@@ -13,12 +13,16 @@ export function safeSpeed(gap, leaderSpeed, speed, decel, reactionTime) {
 // bumper of the last vehicle, or to the nearest obstacle block, whichever is
 // closer. Used for the one courtesy rule drivers follow: don't enter a junction
 // with nowhere to go. Deliberately naive: it ignores vehicles still in the box.
+// A last vehicle that is moving freely does not count: drivers expect it to keep
+// going, so only a stopped or crawling one (a real queue) or a block takes room.
+export const FLOWING_SPEED = 10;
 export function laneEntryRoom(lane) {
   let free = lane.length;
   const list = lane.vehicles;
   if (list.length > 0) {
     const rear = list[list.length - 1];
-    free = rear.components.VehicleStateComponent.s - rear.components.VehicleComponent.length;
+    const rs = rear.components.VehicleStateComponent;
+    if (rs.speed < FLOWING_SPEED) free = rs.s - rear.components.VehicleComponent.length;
   }
   for (let i = 0; i < lane.blockers.length; i++) if (lane.blockers[i].rear < free) free = lane.blockers[i].rear;
   return free;
