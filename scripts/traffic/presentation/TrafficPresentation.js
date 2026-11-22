@@ -10,7 +10,6 @@ import { UI, Theme, world } from "../ui/theme.js";
 import { toCss } from "../ui/themes.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
-const EXIT_HIGH_MULTIPLIER = 3; // exits paid at or above this get the highlight colour
 
 // Phaser-side view of a TrafficSession. Reads ECS state and draws it; owns no
 // simulation state and never writes back into the world. The only way it changes
@@ -70,20 +69,7 @@ export class TrafficPresentation {
       isPending: (groupId) => actions.isSignalPending(groupId),
     });
 
-    // Floating payout / event text. Events are only read: nothing here writes to the simulation.
-    this.floats = [];
     this.towDelay = session.sim.interventions.tow?.delay ?? 3;
-    const events = session.events;
-    // The reward event: a car reached an exit. Points at the multiplier it was paid at, cash beneath.
-    // The popup grows with the multiplier, so a run of exits at a high multiplier reads bigger.
-    events.on(TrafficEvents.VEHICLE_COMPLETED, (vehicle, gate, reward) => {
-      const p = vehicle.components.Position;
-      const w = world();
-      const high = reward.multiplier >= EXIT_HIGH_MULTIPLIER;
-      const size = Math.min(26, Math.round(13 + reward.multiplier * 2));
-      this.float(`+${Math.round(reward.points)}  ×${reward.multiplier.toFixed(1)}`, p.x, p.y - 14, high ? w.cashBig : w.cash, `800 ${size}px Epilogue, system-ui`);
-      this.float(`$${Math.round(reward.cash)}`, p.x, p.y + 6, w.cash, "800 12px Epilogue, system-ui", 1.1);
-    });
 
     this.debugSystem = new DebugSystem({ testSprite: false });
     this.debugView = new TrafficDebugView(session, this.debugSystem, debugFlags, camera);
@@ -265,32 +251,9 @@ export class TrafficPresentation {
     }
   }
 
-  float(text, x, y, fill, font, life = 1.4) {
-    const t = game.add.text(x, y, text, { font, fill, stroke: world().labelStroke, strokeThickness: 4 });
-    t.anchor.setTo(0.5, 1);
-    spriteLayers.fg5.add(t);
-    this.floats.push({ t, y0: y, born: game.time.now, life: life * 1000 });
-  }
-
-  syncFloats() {
-    const now = game.time.now;
-    for (let i = this.floats.length - 1; i >= 0; i--) {
-      const f = this.floats[i];
-      const k = (now - f.born) / f.life;
-      if (k >= 1) {
-        f.t.destroy();
-        this.floats.splice(i, 1);
-      } else {
-        f.t.y = f.y0 - k * 36;
-        f.t.alpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
-      }
-    }
-  }
-
   update() {
     if (this.themeDirty) this.restyle();
     this.syncCamera();
-    this.syncFloats();
     this.worldUi.update();
     this.syncLights();
     this.syncVehicles();
@@ -406,7 +369,6 @@ export class TrafficPresentation {
     this.pointerBinding.detach();
     this.themeBinding();
     this.worldUi.destroy();
-    for (const f of this.floats) f.t.destroy();
     this.textures.destroy();
     game.world.removeAll(true);
   }

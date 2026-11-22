@@ -27,7 +27,6 @@ export class TrafficStatsComponent {
     this.networkLoad = 0; // 0..1: share of lane length occupied by vehicles
     this.congestion = 0; // 0..1: pressure of the most backed-up stream (StreamSystem); the only input to the multiplier
     this.congestionStream = null; // id of that stream ("groupId@laneId"), null while nothing is queued
-    this.congestionTrend = 0; // congestion minus its recent average: > 0 rising, < 0 falling
     this.demandRate = 0; // total arrivals per second right now
     this.score = 0; // points from exits, each at the multiplier of the moment (written by OutputGateSystem)
     this.blockedEntries = 0; // vehicles held at a green line with no room beyond

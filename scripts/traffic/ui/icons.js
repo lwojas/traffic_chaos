@@ -2,6 +2,7 @@ import { el } from "./dom.js";
 
 // Small stroke icon set (24x24, currentColor) so the HUD needs no icon font.
 const PATHS = {
+  coin: '<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M14.5 9.5c-.6-.6-1.4-.9-2.5-.9-1.4 0-2.5.6-2.5 1.7 0 2.4 5 1.1 5 3.5 0 1.1-1.1 1.7-2.5 1.7-1.1 0-2-.3-2.6-1"/>',
   gauge: '<path d="M3.3 17a9 9 0 1 1 17.4 0"/><path d="M12 14l4-5"/>',
   grid: '<path d="M12 3v7"/><path d="M12 10l-6 5v6"/><path d="M12 10l6 5v6"/><path d="M9 6l3-3 3 3"/>',
   pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',

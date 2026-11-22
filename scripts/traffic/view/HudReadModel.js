@@ -4,8 +4,6 @@ const _p = { x: 0, y: 0, angle: 0 };
 
 import { riskBand } from "../util/pressureMath.js";
 
-const TREND_DEADBAND = 0.02; // congestion within this of its recent average reads as steady
-
 // What the player-facing HUD and minimap show, read straight from the
 // simulation: the stats component for aggregates, ECS components for gates and
 // incidents. Nothing here is calculated a second time; the few derived values
@@ -78,11 +76,12 @@ export class HudReadModel {
     };
   }
 
-  // The multiplier every exit is paid at, and how much congestion is costing right now (`lost`).
+  // The multiplier every exit is paid at, how much congestion is costing right now (`lost`), and the
+  // highest it can currently climb to (`ceiling`, 0..1 along the same scale as `fill`).
   readMultiplier() {
     const st = this.session.stats;
     const cfg = this.session.sim.multiplier;
-    return { value: st.multiplier, min: cfg.min, max: cfg.max, lost: Math.max(0, cfg.max - st.multiplier), fill: (st.multiplier - cfg.min) / (cfg.max - cfg.min) };
+    return { value: st.multiplier, min: cfg.min, max: cfg.max, lost: Math.max(0, cfg.max - st.multiplier), fill: (st.multiplier - cfg.min) / (cfg.max - cfg.min), ceiling: (st.multiplierTarget - cfg.min) / (cfg.max - cfg.min) };
   }
 
   // The meter that drives the multiplier: the worst stream's pressure, the same number (and risk
@@ -93,7 +92,6 @@ export class HudReadModel {
     return {
       value: st.congestion,
       band: riskBand(st.congestion, this.session.sim.pressure.riskBands),
-      trend: st.congestionTrend > TREND_DEADBAND ? 1 : st.congestionTrend < -TREND_DEADBAND ? -1 : 0, // 1 rising, -1 falling
       worst: w ? { x: w.tx, y: w.ty } : null,
     };
   }

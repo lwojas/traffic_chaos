@@ -3,7 +3,6 @@ import { ServiceLocator } from "../../services/ServiceLocator.js";
 import { targetMultiplier } from "../../traffic/util/multiplierMath.js";
 
 const SMOOTH_SECONDS = 3; // congestion change is measured on a smoothed value, so a whole queue clearing in one tick pays out over a few seconds, not in one jump
-const TREND_SECONDS = 4; // congestion is compared with its own recent average to tell rising from falling
 
 // Step 14: the multiplier. It starts at `min` and is earned in small steps:
 //
@@ -22,7 +21,6 @@ export class MultiplierSystem extends System {
     this.sim = ServiceLocator.resolve("game", "TrafficSimulation");
     this.stats = ServiceLocator.resolve("game", "TrafficStats");
     this.cfg = this.sim.multiplier;
-    this.average = 0;
     this.smooth = 0;
     this.stats.multiplier = this.cfg.start ?? this.cfg.min;
     this.stats.multiplierTarget = this.stats.multiplier;
@@ -40,8 +38,6 @@ export class MultiplierSystem extends System {
     if (m > ceiling) m += (ceiling - m) * (1 - Math.exp(-dt / cfg.fallSeconds));
     st.multiplier = Math.min(cfg.max, Math.max(cfg.min, m));
     st.multiplierTarget = ceiling;
-    this.average += (st.congestion - this.average) * (1 - Math.exp(-dt / TREND_SECONDS));
-    st.congestionTrend = st.congestion - this.average;
     st.multiplierIntegral += st.multiplier * dt;
     st.avgMultiplier = this.sim.time > 0 ? st.multiplierIntegral / this.sim.time : st.multiplier;
     if (st.multiplier > st.peakMultiplier) st.peakMultiplier = st.multiplier;
