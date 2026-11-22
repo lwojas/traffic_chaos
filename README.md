@@ -112,7 +112,7 @@ See **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** for step-by-step inst
 
 ## Traffic game (default scene)
 
-`npm start` opens the traffic network pressure-management game (`?game=whiteroom` loads the old ship sandbox). Switch signal groups (click or keys 1-4) to keep traffic flowing while demand rises. Conflicting movements released together cause incidents, incidents create temporary obstacles, obstacles cause queues, and a full input queue means gridlock. Press `D` for the debug overlay. `npm test` runs the headless simulation tests.
+`npm start` opens the traffic network pressure-management game (`?game=whiteroom` loads the old ship sandbox). Switch signal groups (click or keys 1-4) to keep traffic flowing while demand rises. Every vehicle that reaches an exit earns points and cash times a multiplier; congestion lowers the multiplier and clearing it brings it back. Conflicting movements released together cause incidents, incidents create temporary obstacles, obstacles cause queues, and a full input queue means gridlock. Press `D` for the debug overlay. `npm test` runs the headless simulation tests.
 
 - Contributors and agents: read [TRAFFIC_GUIDE.md](TRAFFIC_GUIDE.md) first.
 - Level data: `data/levels/*.json` (schema v2, validated by `scripts/traffic/level/validateLevel.js`). Regenerate the compact level with `node tools/generate-network.mjs`.

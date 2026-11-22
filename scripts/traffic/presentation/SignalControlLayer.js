@@ -166,8 +166,7 @@ export class SignalControlLayer {
     const state = h.group.state;
     const turn = TURN_WORDS[h.turns[0]] ?? h.turns[0];
     const lines = [`${h.direction.toUpperCase()} · ${turn}`, `${s.queue} waiting · ${s.blocked ? "BLOCKED" : RISK_NAMES[s.risk]}`];
-    if (s.queue >= 1) lines.push(s.gain > 0 ? `waited ${Math.round(s.waitAvg)}s → release ≈ +${Math.round(s.gain * 100)}%` : s.blocked ? "no recovery while blocked" : `waited ${Math.round(s.waitAvg)}s`);
-    lines.push(state === LightState.GREEN || h.group.wantGreen ? "click to HOLD" : "click to RELEASE");
+    lines.push(state === LightState.GREEN || h.group.wantGreen ? "click to STOP" : "click to GO");
     const text = lines.join("\n");
     if (this.tip.text !== text) this.tip.text = text;
     this.tip.x = h.x;

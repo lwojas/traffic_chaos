@@ -2,15 +2,9 @@ import { pointAt } from "../util/geometry.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
 
-// How the network is holding up, as a word and a 0..3 band (same bands as stream
-// risk). A label over two authoritative stats, not a second rule: the worse of
-// "fullest input queue" and "share of lanes lost to incidents".
-export const STABILITY = ["STABLE", "MODERATE", "STRAINED", "CRITICAL"];
-export function stabilityBand(gridlockRisk, capacity) {
-  const worst = Math.max(gridlockRisk, 1 - capacity);
-  const band = worst >= 0.85 ? 3 : worst >= 0.6 ? 2 : worst >= 0.3 ? 1 : 0;
-  return { band, label: STABILITY[band] };
-}
+import { riskBand } from "../util/pressureMath.js";
+
+const TREND_DEADBAND = 0.02; // congestion within this of its recent average reads as steady
 
 // What the player-facing HUD and minimap show, read straight from the
 // simulation: the stats component for aggregates, ECS components for gates and
@@ -45,6 +39,7 @@ export class HudReadModel {
     const s = this.session;
     const st = s.stats;
     const sim = s.sim;
+    const streams = this.readStreams();
     const gates = this.gates.map(({ gate: g, x, y }) => ({
       id: g.levelId,
       label: g.label,
@@ -65,8 +60,6 @@ export class HudReadModel {
       throughput: st.completed,
       throughputPerMin: st.throughputPerMin,
       capacity: st.networkCapacity,
-      load: st.networkLoad,
-      stability: stabilityBand(st.peakQueueFill, st.networkCapacity),
       gridlockRisk: st.peakQueueFill,
       gridlockProgress: st.gridlockProgress,
       gridlockSeconds: sim.gridlock.fullSeconds,
@@ -74,9 +67,9 @@ export class HudReadModel {
       incidentsTotal: st.incidents,
       cash: st.cash,
       earned: st.earned,
-      income: { rate: st.incomeRate, base: st.baseIncome, multiplier: st.satMultiplier },
-      satisfaction: this.readSatisfaction(),
-      streams: this.readStreams(),
+      streams,
+      multiplier: this.readMultiplier(),
+      congestion: this.readCongestion(streams),
       tow: s.interventions.describe("tow"),
       gates,
       incidents: this.readIncidents(),
@@ -85,18 +78,23 @@ export class HudReadModel {
     };
   }
 
-  // Satisfaction, the multiplier it sets and why it is moving. `waiting` is cars held past the free
-  // grace period (what drains it); `recovering` is recent release gain in meter points (what refills it).
-  readSatisfaction() {
+  // The multiplier every exit is paid at, and how much congestion is costing right now (`lost`).
+  readMultiplier() {
     const st = this.session.stats;
-    const v = st.satisfaction;
+    const cfg = this.session.sim.multiplier;
+    return { value: st.multiplier, min: cfg.min, max: cfg.max, lost: Math.max(0, cfg.max - st.multiplier), fill: (st.multiplier - cfg.min) / (cfg.max - cfg.min) };
+  }
+
+  // The meter that drives the multiplier: the worst stream's pressure, the same number (and risk
+  // band) its world control shows. `worst` is where that stream's queue is, to jump the camera to.
+  readCongestion(streams) {
+    const st = this.session.stats;
+    const w = st.congestionStream && streams.find((s) => s.id === st.congestionStream);
     return {
-      value: v,
-      multiplier: st.satMultiplier,
-      band: v < 0.25 ? 2 : v < 0.45 ? 1 : 0, // 0 healthy, 1 warning, 2 critical
-      waiting: st.satWaiting,
-      drain: st.satDrain,
-      recovering: Math.round((st.satRecent + st.satPool) * 100),
+      value: st.congestion,
+      band: riskBand(st.congestion, this.session.sim.pressure.riskBands),
+      trend: st.congestionTrend > TREND_DEADBAND ? 1 : st.congestionTrend < -TREND_DEADBAND ? -1 : 0, // 1 rising, -1 falling
+      worst: w ? { x: w.tx, y: w.ty } : null,
     };
   }
 
@@ -108,7 +106,7 @@ export class HudReadModel {
       const y = _p.y;
       const slot = s.lane.length / s.capacity;
       pointAt(s.lane.path, Math.max(0, s.lane.stopLineS - s.queue * slot), _p);
-      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked, waitAvg: s.waitAvg, gain: s.gain };
+      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked };
     });
   }
 

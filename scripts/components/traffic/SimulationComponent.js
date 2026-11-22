@@ -22,10 +22,9 @@ export class SimulationComponent {
     this.demandScale = data.demandScale ?? 1; // global multiplier (tests, difficulty)
     this.incidents = data.incidents; // { enabled, duration }
     this.gridlock = data.gridlock; // { fullSeconds }
-    this.scoring = data.scoring; // { perVehicle, perIncident }
-    this.economy = data.economy; // { incomePerSecond, startCash }
-    this.satisfaction = data.satisfaction; // see data/game-config.json
-    this.multiplier = data.multiplier; // { min, max }: income multiplier range over satisfaction 0..1
+    this.scoring = data.scoring; // { perVehicle }: base points per exit, before the multiplier
+    this.economy = data.economy; // { cashPerVehicle, startCash }: base cash per exit, before the multiplier
+    this.multiplier = data.multiplier; // { min, max, calm, jam, riseSeconds, fallSeconds }: congestion -> multiplier
     this.pressure = data.pressure; // { riskBands }: how full a stream's holding space must be for each risk band
     this.interventions = data.interventions; // { tow: { cost, costStep, cooldown, delay } }
     this.goal = data.goal ?? null; // { surviveSeconds }: reaching it completes the level

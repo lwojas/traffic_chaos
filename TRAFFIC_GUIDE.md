@@ -6,8 +6,8 @@ Read this before changing anything under `scripts/traffic/`, `scripts/system/tra
 
 1. **The player causes failure.** Vehicles are simple agents. Do not add conflict avoidance, junction reservations, rerouting, or anything that makes bad signal choices safe. If you add driver behaviour, ask: does this stop the player's mistake from having consequences? If so, it does not belong.
 2. **Failure is capacity collapse**, not money. A full input queue for `gridlock.fullSeconds` ends the level. Cash is a tool for recovering, never a way to lose.
-6. **Waiting hurts, release pays, and there is one reward system.** Funds accrue continuously (`IncomeSystem`) at `incomePerSecond x satisfaction multiplier`; Satisfaction (`SatisfactionSystem`) falls while cars wait and rises when cars that waited get moving. Never pay per vehicle, never pay for queue length or gridlock, and do not add a second multiplier or combo on top. Holding traffic is a gamble: the longer it waits the more its release is worth, and the more network pressure and incident risk it carries.
-7. **Satisfaction 0 is not failure.** It collapses the income multiplier; only gridlock ends a level. Keep Satisfaction (how well waiting traffic is managed), network pressure (how close the network is to gridlock) and funds (the resource) as separate values.
+6. **Exits pay, congestion sets the multiplier, and there is one reward system.** A vehicle reaching an exit gate is the only thing that earns: `scoring.perVehicle` points and `economy.cashPerVehicle` cash, each times the current multiplier (`OutputGateSystem`). The multiplier (`MultiplierSystem`) follows congestion and nothing else. Never pay over time, per queue, for holding or releasing traffic, or for gridlock, and do not add a second multiplier, combo, or hidden meter. Holding a queue is a normal tactical choice with its own natural cost (congestion, incident risk), never a mechanic with its own bonus.
+7. **A low multiplier is not failure.** It floors at `multiplier.min`; only gridlock ends a level. Keep the multiplier (performance), congestion (pressure on the network) and gridlock (failure) as separate values.
 8. **Interventions edit state, not cars.** The tow truck shortens an obstacle timer. Do not give vehicles new behaviour to support an intervention.
 3. **Determinism.** Same level + seed + signal commands = same result. Use `nextRandom(state)` from `traffic/util/rng.js` with a seeded state; never `Math.random()` or wall-clock time in simulation code.
 4. **Three layers, no leaking.** Level topology (JSON, compile) -> runtime simulation (ECS, `TrafficSession`, no Phaser) -> presentation (Phaser, HUD, debug view; reads the world, never writes it). Tests run the simulation without Phaser.
@@ -24,7 +24,7 @@ Read this before changing anything under `scripts/traffic/`, `scripts/system/tra
 | Lifecycle (load/restart/unload) | `scripts/traffic/TrafficGame.js` |
 | Components (data only) | `scripts/components/traffic/`, registered in `index.js` |
 | Systems | `scripts/system/traffic/` |
-| Streams, satisfaction, income, tow, ratings, unlocks | `system/traffic/StreamSystem.js`, `SatisfactionSystem.js`, `IncomeSystem.js`, `InterventionSystem.js`, `ShiftSystem.js`, `util/satisfactionMath.js`, `util/pressureMath.js`, `progress/` |
+| Streams, congestion, multiplier, rewards, tow, ratings, unlocks | `system/traffic/StreamSystem.js` (congestion), `MultiplierSystem.js`, `OutputGateSystem.js` (rewards), `InterventionSystem.js`, `ShiftSystem.js`, `util/multiplierMath.js`, `util/pressureMath.js`, `progress/` |
 | Level-design diagnostic (not used by the simulation) | `util/networkBalance.js` |
 | Phaser view, world-space UI, debug overlay | `scripts/traffic/presentation/` |
 | Camera, minimap maths, HUD read model, control layout (pure, no Phaser/DOM) | `scripts/traffic/view/` |
@@ -43,13 +43,12 @@ Defined in `TrafficSession`'s constructor. Each step only reads what earlier ste
 6. `JunctionConflictSystem`: two active vehicles in both sides of a conflict zone -> incident + obstacle
 7. `ObstacleSystem`: activate, count down, clear obstacles (blocks act as stopped leaders)
 8. `JunctionSystem`: box occupancy
-9. `OutputGateSystem`: arrived vehicles leave, throughput++ (emits `VEHICLE_COMPLETED`)
-10. `StreamSystem`: per (signal group, approach lane): queue, pressure, risk band, wait, what a release is worth
-11. `SatisfactionSystem`: waiting cars drain the meter, cars entering a junction after a wait refill it
-12. `IncomeSystem`: funds += `incomePerSecond x multiplier(satisfaction)`
-13. `TrafficStatsSystem`: queues, capacity, load, score
-14. `GridlockSystem`: full-queue timer, sets `sim.status = "gridlock"` (the session then stops ticking)
-15. `ShiftSystem`: `goal.surviveSeconds` reached -> `sim.status = "complete"`
+9. `OutputGateSystem`: arrived vehicles leave and are paid points + cash at the current multiplier (emits `VEHICLE_COMPLETED` with the reward)
+10. `StreamSystem`: per (signal group, approach lane): queue, pressure, risk band; publishes `stats.congestion` (worst stream's pressure)
+11. `TrafficStatsSystem`: queues, capacity, load
+12. `MultiplierSystem`: congestion -> target multiplier -> current multiplier (eased)
+13. `GridlockSystem`: full-queue timer, sets `sim.status = "gridlock"` (the session then stops ticking)
+14. `ShiftSystem`: `goal.surviveSeconds` reached -> `sim.status = "complete"`
 
 Add a new system by constructing it in that list at the point where its inputs exist. Changing the order changes gameplay; add a test.
 
@@ -59,8 +58,8 @@ The UI is a consumer of the simulation. Nothing below writes to the ECS; the onl
 
 ```
 Simulation (ECS, stats)
-   ├─ HudReadModel          view/       one snapshot per refresh: satisfaction, income, capacity, gates, incidents
-   │     └─ GameHud widgets ui/hud/     LoadDisplay, CashDisplay (satisfaction + multiplier + funds), QueueStatus, TowPanel (incidents),
+   ├─ HudReadModel          view/       one snapshot per refresh: multiplier, congestion, score, cash, capacity, gates, incidents
+   │     └─ GameHud widgets ui/hud/     CongestionDisplay, RewardDisplay (multiplier + score + cash), QueueStatus, TowPanel (incidents),
    │                                    GameControls + SettingsMenu (theme, developer mode), HintCard, StatusBanner, Minimap
    ├─ TrafficPresentation   presentation/  Phaser world drawing
    │     └─ SignalControlLayer           world-space signal controls (+ signalControlSkin.js)
@@ -78,23 +77,18 @@ ViewCamera (view/) <- ViewportInput (ui/) <- pointer/keys;  Minimap and edge scr
 - **Minimap.** Draws level topology (roads, junctions) plus gate pressure, incidents and the view rectangle. It does not render the world. Click or drag calls `camera.glideTo` / `centerOn`.
 - **Debug mode.** There is no debug button in the player HUD; it is Settings > Developer mode or `D`. `DebugMode` is the shared switch (panel + overlay). Pause, restart, speed and `D` keys live in `GameHud`; the panel keeps `.` (step) and `1-9` (signal groups). The overlay bitmap is viewport-sized and screen-fixed, so `TrafficDebugView` translates by the camera.
 
-## Gameplay loop: satisfaction, funds, tow, medals
+## Gameplay loop: exits, multiplier, tow, medals
 
-**Traffic is the resource. Waiting creates pressure; release converts it into satisfaction; satisfaction raises income; income buys recovery.**
+**Manage traffic -> keep congestion low -> hold the multiplier -> vehicles reach exits -> points + cash -> prevent gridlock.**
 
-- **Stream** = one (signal group, approach lane). Its id is `groupId@laneId`, the same id as its world control. `session.streams.streams` exposes `queue`, `pressure`, `risk` (0 SAFE .. 3 CRITICAL), `waitAvg`, `waitMax`, `gain` (meter share a release would earn now), `blocked`. Streams only measure.
-- **Pressure** = (cars waiting + this lane's share of the input queue) / (lane capacity + that share's capacity). Lane capacity comes from lane length and the vehicle mix (`laneCapacity`). Bands are `pressure.riskBands`. This is network pressure, not satisfaction.
-- **Spell** (`VehicleStateComponent.spell`): seconds a car has been held, accumulated while it is slower than 3 px/s and reset when it enters a junction (or leaves the map). Creeping forward in a queue does not reset it.
-- **Satisfaction** (0..1, `simulation.satisfaction`):
-  - each waiting car contributes `contribution(spell)`: free for `grace` s, then convex up to 1 at `fullWait`. Cars waiting off the map in an input queue count at `gateWeight`.
-  - drain per second = `drainMax x (1 - e^(-sum / (drainK x size)))`: saturating, so a long queue is bad but not catastrophic.
-  - a car entering a junction after waiting `w` is worth `releaseGain(w) / size` (faster than linear in `w`). Gains go into a pool paid out over `recoverSeconds`: a release is a visible climb, never a jump.
-  - with nothing waiting it relaxes toward `rest` over `restSeconds`. Without a resting level, never holding traffic would be optimal; a surge above `rest` is the reward for holding and it fades.
-  - `size = entries / refEntries`, so the same meter means the same on a 2-entry and a 10-entry map.
-- **Income**: `economy.incomePerSecond x multiplier`, with `multiplier = min + (max - min) x satisfaction` (`simulation.multiplier`). No per-vehicle pay. The only spend is the tow truck.
+- **Stream** = one (signal group, approach lane). Its id is `groupId@laneId`, the same id as its world control. `session.streams.streams` exposes `queue`, `pressure`, `risk` (0 SAFE .. 3 CRITICAL), `blocked`. Streams only measure.
+- **Pressure** = (cars waiting + this lane's share of the input queue) / (lane capacity + that share's capacity). Lane capacity comes from lane length and the vehicle mix (`laneCapacity`). Bands are `pressure.riskBands`.
+- **Congestion** (`stats.congestion`, 0..1) = the highest stream pressure right now, `stats.congestionStream` names it. It is the same number and colour band the world controls show, so "that road is backing up" and "that is costing me" are the same observation. It is the only input to the multiplier; do not add other penalties next to it. (A network-wide average was tried and rejected: on big maps most lanes are idle, so it never moved.)
+- **Multiplier** (`stats.multiplier`, `multiplier.{min,max,calm,jam,riseGain,fallGain,fallSeconds}`): starts at `min` (x1) and is earned slowly. It only RISES when congestion falls (`riseGain` per unit cleared, measured on a 3 s-smoothed congestion so gains arrive in small steps); it falls when congestion rises (`fallGain`) and is clamped to the ceiling congestion allows (`util/multiplierMath.js`: `max` at or below `calm`, `min` at or above `jam`, linear between). A calm network that never backed up earns nothing. Tuned so good bot play reaches about x2 at 10 min and x3 needs 10+ min or expert play; re-check with `node tools/playtest.mjs` after changing gains.
+- **Reward**: an exit pays `scoring.perVehicle x multiplier` points and `economy.cashPerVehicle x multiplier` cash, at the multiplier of that tick. `OutputGateSystem` is the only writer of `score`, `cash` (credit) and `earned`. There is no income over time and no incident score penalty (the obstruction is the penalty). The presentation floats `+points x mult` and `$cash` at the exit from the event.
 - **Tow**: command `session.intervene("tow", obstacleId)` -> `InterventionSystem`. Cost `cost + costStep x uses`, then `cooldown`; the obstacle clears `delay` seconds later. Never refunded. Add an intervention by adding a handler in `InterventionSystem.handlers` and a config entry under `interventions`.
-- **Ratings/unlocks**: `progress/rating.js` (`rateRun`, pure) and `progress/Progression.js`. Level JSON holds `goal`, `ratings` (bronze/silver/gold requirements: `time`, `earned`, `satisfaction` (run average, 0..1), `maxIncidents`) and `progression` (`order`, `blurb`, `unlock: {after, medal}`).
-- **Config merge**: `game-config.json` `simulation.{economy,satisfaction,multiplier,pressure,interventions}` are defaults; a level may override any key.
+- **Ratings/unlocks**: `progress/rating.js` (`rateRun`, pure) and `progress/Progression.js`. Level JSON holds `goal`, `ratings` (bronze/silver/gold requirements: `time`, `score`, `maxIncidents`) and `progression` (`order`, `blurb`, `unlock: {after, medal}`).
+- **Config merge**: `game-config.json` `simulation.{scoring,economy,multiplier,pressure,interventions}` are defaults; a level may override any key. Do not restate them in generated levels unless a level really differs.
 
 ## Level authoring: entry and exit capacity
 
@@ -123,8 +117,8 @@ More entries than exits is pressure, but not a formula: road capacity, signals a
 - **New HUD element**: add a widget in `ui/hud/`, construct it in `GameHud.bind`, feed it from `HudReadModel` (which reads stats/components). Take styling from `theme.js`.
 - **New debug layer**: add it to `DEBUG_LAYERS` in `TrafficDebugView.js`.
 - **New world-space UI**: lives in the Phaser world layer (so it moves with the camera), placed in world coordinates, hit-tested through the `pick/setHover/activate` interface that `ViewportInput` calls. Do not position it from screen coordinates.
-- **Pacing/balance**: `node tools/playtest.mjs [levelFile] [seeds]` plays a level with bots (idle, reckless, fixed-cycle, greedy, charger, +tow) and prints the network balance, how each run ended, funds, satisfaction (avg/min/peak) and the biggest release. `PHASES='[["sg_a"],["sg_b"]]'` sets which groups a bot opens together. Target for the first level: idle ends under about 7 min, sensible play lasts 9-12 min. Bots are not humans: confirm by hand.
-- **Tuning**: entry/exit data and demand curves in the level JSON; satisfaction, income, incident duration and gridlock timer in `data/game-config.json` (levels can override). Re-run the strategy test in `tests/simulation.test.js` after tuning: bad strategies must still collapse well before a sensible one.
+- **Pacing/balance**: `node tools/playtest.mjs [levelFile] [seeds]` plays a level with bots (idle, reckless, fixed-cycle, greedy, charger, +tow) and prints the network balance, how each run ended, score, cash, exits, incidents and the multiplier (avg/peak). `PHASES='[["sg_a"],["sg_b"]]'` sets which groups a bot opens together. Target for the first level: idle ends under about 7 min, sensible play lasts 9-12 min. Bots are not humans: confirm by hand.
+- **Tuning**: entry/exit data and demand curves in the level JSON; rewards, multiplier range and congestion thresholds, incident duration and gridlock timer in `data/game-config.json` (levels can override). Re-run the strategy test in `tests/simulation.test.js` after tuning: bad strategies must still collapse well before a sensible one.
 
 ## Pitfalls
 
@@ -136,7 +130,7 @@ More entries than exits is pressure, but not a formula: road capacity, signals a
 
 ## Testing
 
-Engine tests use frozen copies of the original levels in `tests/fixtures/` (retuning a shipped level does not move them). `tests/satisfaction.test.js` covers satisfaction, income, streams and the tow truck; `tests/progress.test.js` covers ratings, unlocks, `TrafficGame.finishRun` and the shipped-level and pacing checks.
+Engine tests use frozen copies of the original levels in `tests/fixtures/` (retuning a shipped level does not move them). `tests/economy.test.js` covers the multiplier, exit rewards, streams and the tow truck; `tests/progress.test.js` covers ratings, unlocks, `TrafficGame.finishRun` and the shipped-level and pacing checks.
 
 UI logic that matters is kept pure so it is tested headless: `tests/camera.test.js` (camera, edge scroll, minimap transform), `tests/hud.test.js` (signal control layout, read model). The Phaser/DOM layer (`ViewportInput`, widgets, `SignalControlLayer`) has no automated test; check it in a browser.
 
@@ -144,6 +138,6 @@ UI logic that matters is kept pure so it is tested headless: `tests/camera.test.
 
 ## Not implemented yet (known gaps)
 
-Levels are only bot-tuned (not hand-playtested): the fixed-time bots survive more easily than a human managing every signal, and `city_rush` / `city_crunch` end alike because the same exit (S1) is their binding constraint. A collision-focused map and more asymmetric topologies, the satisfaction trend/forecast in the HUD beyond the single reason line, road crew / emergency / capacity-boost interventions, and the new HUD, world controls and minimap markers have had no browser verification. Left turns (schema supports `turn: "left"`; opposing lefts collide geometrically in a small box), obstacle types beyond collision/roadworks, visual polish of the HUD, controls and minimap (prototype styling), camera zoom, touch input, a browser-level smoke test of the Phaser presentation (the DOM/Phaser wiring is not covered by `npm test`; only the pure `view/` modules are).
+Levels are only bot-tuned (not hand-playtested): the fixed-time bots survive more easily than a human managing every signal, and `city_rush` / `city_crunch` end alike because the same exit (S1) is their binding constraint. A collision-focused map and more asymmetric topologies, road crew / emergency / capacity-boost interventions, and the new HUD, world controls and minimap markers have had no browser verification. Left turns (schema supports `turn: "left"`; opposing lefts collide geometrically in a small box), obstacle types beyond collision/roadworks, visual polish of the HUD, controls and minimap (prototype styling), camera zoom, touch input, a browser-level smoke test of the Phaser presentation (the DOM/Phaser wiring is not covered by `npm test`; only the pure `view/` modules are).
 
 `network_02` is the first multi-junction level: a lane between two junctions is both the exit of one and the approach of the next, and carries both its straight and right-turn movements, so a right-turner waiting on a red turn group can hold up traffic behind it.

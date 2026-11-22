@@ -5,7 +5,7 @@ import { TrafficEvents } from "../../traffic/TrafficEvents.js";
 const QUEUE_SPEED = 3; // px/s: slower than this counts as queued
 const THROUGHPUT_WINDOW = 60; // seconds
 
-// Steps 9 and 11: queues, capacity and score. Event listeners count discrete
+// Step 13: queues, capacity and congestion. Event listeners count discrete
 // things, update() samples continuous ones. UI and debug tools read the stats
 // component; they never compute.
 export class TrafficStatsSystem extends System {
@@ -122,9 +122,5 @@ export class TrafficStatsSystem extends System {
     s.inputCapacity = capacity;
     s.demandRate = rate;
 
-    // Biggest single release: the most satisfaction a 3 s window of releases paid
-    if (s.satRecent > s.biggestRelease) s.biggestRelease = s.satRecent;
-
-    s.score = s.completed * sim.scoring.perVehicle - s.incidents * sim.scoring.perIncident;
   }
 }

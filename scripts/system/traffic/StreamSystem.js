@@ -1,17 +1,18 @@
 import { System } from "../System.js";
 import { ServiceLocator } from "../../services/ServiceLocator.js";
 import { laneCapacity, riskBand, RISK } from "../../traffic/util/pressureMath.js";
-import { releaseGain } from "../../traffic/util/satisfactionMath.js";
 
 const QUEUE_SPEED = 3; // px/s: slower than this counts as queued (same as TrafficStatsSystem)
 
-// Step 10: streams. A STREAM is one (signal group, approach lane) pair: the unit a
+// Step 12: streams. A STREAM is one (signal group, approach lane) pair: the unit a
 // world control belongs to. Each tick this measures how many cars are stopped for
-// it, how full its holding space is (pressure / risk band), whether an incident
-// blocks it, and what releasing it is worth in Satisfaction right now.
+// it, how full its holding space is (pressure / risk band) and whether an incident
+// blocks it.
 //
-// Streams only MEASURE. They pay nothing and decide nothing: Satisfaction and
-// income are separate systems, so there is one answer to "why am I earning more?".
+// Streams only MEASURE. They pay nothing and decide nothing. The one number they publish for
+// the economy is `stats.congestion`: the pressure of the most backed-up stream (0..1), i.e. "the
+// worst road right now". The multiplier follows it, so the road the player sees filling up is
+// the road that costs them.
 // Read by the HUD, the minimap, world controls and the playtest bots.
 export class StreamSystem extends System {
   constructor() {
@@ -22,6 +23,7 @@ export class StreamSystem extends System {
     this.gateHelper = {};
     this.gates = this.entityManager.registerSystem(this.gateHelper, ["InputGateComponent"]);
     this.sim = ServiceLocator.resolve("game", "TrafficSimulation");
+    this.stats = ServiceLocator.resolve("game", "TrafficStats");
     this.cfg = this.sim.pressure;
     this.streams = this.buildStreams();
   }
@@ -57,9 +59,6 @@ export class StreamSystem extends System {
           queueVehicles: [],
           pressure: 0,
           risk: RISK.SAFE,
-          waitAvg: 0, // seconds the stopped cars have been held, on average
-          waitMax: 0,
-          gain: 0, // share of the Satisfaction meter releasing this queue would earn right now
           blocked: false,
         };
         streams.set(key, s);
@@ -70,7 +69,13 @@ export class StreamSystem extends System {
   }
 
   update() {
-    for (const s of this.streams) this.measure(s);
+    let worst = null;
+    for (const s of this.streams) {
+      this.measure(s);
+      if (s.pressure > 0 && (!worst || s.pressure > worst.pressure)) worst = s;
+    }
+    this.stats.congestion = worst ? Math.min(1, worst.pressure) : 0;
+    this.stats.congestionStream = worst ? worst.id : null;
   }
 
   measure(s) {
@@ -89,17 +94,5 @@ export class StreamSystem extends System {
     s.pressure = (s.queue + gateQueue) / (s.capacity + gateCap);
     s.blocked = s.lane.blockers.length > 0 || s.connectors.some((c) => c.blockers.length > 0);
     s.risk = Math.max(riskBand(s.pressure, this.cfg.riskBands), s.blocked ? RISK.DANGER : RISK.SAFE);
-    let wait = 0;
-    let max = 0;
-    let gain = 0;
-    for (let k = 0; k < q.length; k++) {
-      const w = q[k].components.VehicleStateComponent.spell;
-      wait += w;
-      if (w > max) max = w;
-      gain += releaseGain(w, this.sim.satisfaction);
-    }
-    s.waitAvg = q.length > 0 ? wait / q.length : 0;
-    s.waitMax = max;
-    s.gain = s.blocked ? 0 : gain;
   }
 }

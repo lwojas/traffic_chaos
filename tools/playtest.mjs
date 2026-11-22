@@ -34,5 +34,5 @@ for (const [name, make] of Object.entries(bots)) {
   for (let seed = 1; seed <= seeds; seed++) rows.push(play(level, make(), { seed }));
   const avg = (k) => rows.reduce((a, r) => a + r[k], 0) / rows.length;
   const times = rows.map((r) => mm(r.time) + (r.status === "complete" ? "✓" : "")).join(" ");
-  console.log(`${name.padEnd(13)} ends ${times.padEnd(28)} funds ${avg("earned").toFixed(0).padStart(5)}  incidents ${avg("incidents").toFixed(1).padStart(4)}  sat avg ${(avg("avgSatisfaction") * 100).toFixed(0)}% min ${(avg("minSatisfaction") * 100).toFixed(0)}% peak ${(avg("peakSatisfaction") * 100).toFixed(0)}%  biggest release +${(avg("biggestRelease") * 100).toFixed(0)}%`);
+  console.log(`${name.padEnd(13)} ends ${times.padEnd(28)} score ${avg("score").toFixed(0).padStart(5)}  cash ${avg("earned").toFixed(0).padStart(5)}  exits ${avg("throughput").toFixed(0).padStart(3)}  incidents ${avg("incidents").toFixed(1).padStart(4)}  multiplier avg x${avg("avgMultiplier").toFixed(1)} peak x${avg("peakMultiplier").toFixed(1)}`);
 }

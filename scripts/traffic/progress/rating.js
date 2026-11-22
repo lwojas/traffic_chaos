@@ -1,13 +1,12 @@
 // Performance rating for a finished run. Pure: level thresholds + a session
 // summary in, medal out. A medal needs EVERY requirement listed for it, and a
 // higher medal is only awarded if its own requirements are met.
-//   ratings: { bronze: { time, earned, satisfaction, maxIncidents }, silver: {...}, gold: {...} }
+//   ratings: { bronze: { time, score, maxIncidents }, silver: {...}, gold: {...} }
 export const MEDAL_ORDER = ["bronze", "silver", "gold"];
 
 export function meets(summary, req) {
   if (req.time !== undefined && summary.time < req.time) return false;
-  if (req.earned !== undefined && summary.earned < req.earned) return false;
-  if (req.satisfaction !== undefined && summary.avgSatisfaction < req.satisfaction) return false;
+  if (req.score !== undefined && summary.score < req.score) return false;
   if (req.maxIncidents !== undefined && summary.incidents > req.maxIncidents) return false;
   return true;
 }
@@ -27,8 +26,7 @@ export function nextTargets(summary, ratings = {}, current = null) {
   if (!req) return { medal: null, missing: [] };
   const missing = [];
   if (req.time !== undefined && summary.time < req.time) missing.push({ key: "time", need: req.time, have: summary.time });
-  if (req.earned !== undefined && summary.earned < req.earned) missing.push({ key: "earned", need: req.earned, have: summary.earned });
-  if (req.satisfaction !== undefined && summary.avgSatisfaction < req.satisfaction) missing.push({ key: "satisfaction", need: req.satisfaction, have: summary.avgSatisfaction });
+  if (req.score !== undefined && summary.score < req.score) missing.push({ key: "score", need: req.score, have: summary.score });
   if (req.maxIncidents !== undefined && summary.incidents > req.maxIncidents) missing.push({ key: "incidents", need: req.maxIncidents, have: summary.incidents });
   return { medal: next, missing };
 }

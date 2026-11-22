@@ -169,7 +169,7 @@ test("output gates remove vehicles and count throughput per gate", () => {
   runUntil(s, () => s.stats.completed === 1, 30);
   assert.equal(s.entity("output_south").getComponent("OutputGateComponent").throughput, 1);
   assert.equal(s.entity("output_north").getComponent("OutputGateComponent").throughput, 0);
-  assert.equal(s.stats.score, 1, "one point per vehicle delivered");
+  assert.ok(s.stats.score > 0 && s.stats.score <= gameConfig.simulation.scoring.perVehicle * gameConfig.simulation.multiplier.max, "base points x multiplier per vehicle delivered");
 });
 
 test("an output gate with an outflow limit becomes a bottleneck that queues traffic upstream", () => {
@@ -329,7 +329,7 @@ test("a collision creates a temporary obstacle with a countdown", () => {
   assert.equal(o.vehicles.length, 2);
   assert.ok(o.zone.startsWith("zone_"), "records which zone it happened in");
   assert.equal(s.stats.activeObstacles, 1);
-  assert.equal(s.stats.score, -gameConfig.simulation.scoring.perIncident, "incident cost");
+  assert.equal(s.stats.score, 0, "a crash costs no points; the obstruction is the penalty");
 });
 
 test("the obstacle blocks the wrecked movements and the movements through their zones", () => {
@@ -434,7 +434,7 @@ test("bad signal configurations collapse the network; a sensible strategy lasts 
   assert.ok(careless.stats.incidents > 0, "switching without a gap clips the previous phase");
   assert.equal(sensible.stats.incidents, 0);
   for (const bad of [allGreen, allRed, careless]) assert.ok(sensible.time > bad.time * 1.4, `sensible ${sensible.time.toFixed(0)}s vs bad ${bad.time.toFixed(0)}s`);
-  assert.ok(sensible.stats.score > allGreen.stats.score * 5);
+  assert.ok(sensible.stats.completed > allGreen.stats.completed * 4, `${sensible.stats.completed} vs ${allGreen.stats.completed}`);
 });
 
 test("early game is easy: light traffic flows with no queue build-up", () => {

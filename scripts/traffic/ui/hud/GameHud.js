@@ -1,10 +1,10 @@
 import { el } from "../dom.js";
 import { applyLayout } from "../theme.js";
 import { HudReadModel } from "../../view/HudReadModel.js";
-import { CashDisplay } from "./CashDisplay.js";
+import { RewardDisplay } from "./RewardDisplay.js";
 import { TowPanel } from "./TowPanel.js";
 import { MapSelect } from "./MapSelect.js";
-import { LoadDisplay } from "./LoadDisplay.js";
+import { CongestionDisplay } from "./CongestionDisplay.js";
 import { QueueStatus } from "./QueueStatus.js";
 import { HintCard } from "./HintCard.js";
 import { GameControls } from "./GameControls.js";
@@ -47,13 +47,13 @@ export class GameHud {
       const j = session.level.junctions[0].bounds;
       camera.glideTo(j.x + j.w / 2, j.y + j.h / 2);
     };
-    // Reading order: what is happening (load), what am I earning (cash/flow),
+    // Reading order: what is happening (congestion), what am I earning (multiplier, score, cash),
     // what needs attention (incidents, queues), what can I do (controls, hint).
     this.widgets = [
-      new LoadDisplay(topLeft),
+      new CongestionDisplay(topLeft, camera),
       new QueueStatus(topLeft, first.gates, camera),
       (this.tow = new TowPanel(topLeft, this.actions, camera)), // conditional: last in the column so it can never move a permanent panel
-      new CashDisplay(topCenter),
+      new RewardDisplay(topCenter),
       new GameControls(topRight, this.actions, { onMaps: openMaps, onRecenter: recenter }),
       new Minimap(bottomRight, { level: session.level, camera, gates: this.model.inputGatePoints(), outputs: this.model.outputGatePoints() }),
       new StatusBanner(center, this.actions, openMaps),

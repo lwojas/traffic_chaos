@@ -47,10 +47,6 @@
   "incidents": {
     "duration": 15
   },
-  "scoring": {
-    "perVehicle": 1,
-    "perIncident": 5
-  },
   "roads": [
     {
       "id": "road_v0",
@@ -2123,13 +2119,11 @@
     },
     "silver": {
       "time": 540,
-      "earned": 2300,
-      "satisfaction": 0.65
+      "score": 6000
     },
     "gold": {
       "time": 720,
-      "earned": 3700,
-      "satisfaction": 0.82,
+      "score": 11000,
       "maxIncidents": 4
     }
   }

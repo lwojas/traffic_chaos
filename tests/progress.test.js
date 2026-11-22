@@ -12,23 +12,23 @@ import { META } from "../tools/levelMeta.mjs";
 import { memoryProvider, gameConfig, firstJunction, level01, clone, quietSession } from "./helpers/fixtures.js";
 import { play, makeBot, withTow } from "../tools/botPlayers.mjs";
 
-const ratings = { bronze: { time: 100 }, silver: { time: 200, earned: 500, satisfaction: 0.5 }, gold: { time: 300, earned: 900, satisfaction: 0.6, maxIncidents: 1 } };
-const run = (o) => ({ status: "gridlock", time: 0, earned: 0, avgSatisfaction: 0, incidents: 0, ...o });
+const ratings = { bronze: { time: 100 }, silver: { time: 200, score: 500 }, gold: { time: 300, score: 900, maxIncidents: 1 } };
+const run = (o) => ({ status: "gridlock", time: 0, score: 0, earned: 0, avgMultiplier: 1, incidents: 0, ...o });
 
 test("a medal needs every requirement listed for it", () => {
   assert.equal(rateRun(run({ time: 50 }), ratings), null);
   assert.equal(rateRun(run({ time: 120 }), ratings), "bronze");
-  assert.equal(rateRun(run({ time: 250, earned: 400, avgSatisfaction: 0.9 }), ratings), "bronze", "silver also needs the cash");
-  assert.equal(rateRun(run({ time: 250, earned: 600, avgSatisfaction: 0.55 }), ratings), "silver");
-  assert.equal(rateRun(run({ time: 300, earned: 950, avgSatisfaction: 0.65, incidents: 2 }), ratings), "silver", "gold allows at most 1 crash");
-  assert.equal(rateRun(run({ time: 300, earned: 950, avgSatisfaction: 0.65, incidents: 1, status: "complete" }), ratings), "gold");
+  assert.equal(rateRun(run({ time: 250, score: 400 }), ratings), "bronze", "silver also needs the score");
+  assert.equal(rateRun(run({ time: 250, score: 600 }), ratings), "silver");
+  assert.equal(rateRun(run({ time: 300, score: 950, incidents: 2 }), ratings), "silver", "gold allows at most 1 crash");
+  assert.equal(rateRun(run({ time: 300, score: 950, incidents: 1, status: "complete" }), ratings), "gold");
   assert.equal(rateRun(run({ time: 10, status: "complete" }), ratings), "bronze", "finishing the shift is never worse than bronze");
 });
 
 test("the result says what is missing for the next medal", () => {
-  const t = nextTargets(run({ time: 250, earned: 400, avgSatisfaction: 0.1 }), ratings, "bronze");
+  const t = nextTargets(run({ time: 250, score: 400 }), ratings, "bronze");
   assert.equal(t.medal, "silver");
-  assert.deepEqual(t.missing.map((m) => m.key), ["earned", "satisfaction"]);
+  assert.deepEqual(t.missing.map((m) => m.key), ["score"]);
   assert.equal(nextTargets(run({}), ratings, "gold").medal, null);
 });
 
@@ -49,7 +49,7 @@ test("maps unlock from medals, medals only improve, and progress persists", () =
   let r = p.record(metas[0], run({ time: 120 }), metas);
   assert.equal(r.medal, "bronze");
   assert.deepEqual(r.unlocked, [], "bronze is not enough for B");
-  r = p.record(metas[0], run({ time: 250, earned: 600, avgSatisfaction: 0.55 }), metas);
+  r = p.record(metas[0], run({ time: 250, score: 600 }), metas);
   assert.deepEqual(r.unlocked.map((m) => m.id), ["b"]);
   r = p.record(metas[0], run({ time: 120 }), metas);
   assert.equal(p.medal("a"), "silver", "a worse run never lowers a medal");
@@ -109,7 +109,7 @@ test("the teaching level: 2 inputs, one junction, a straight and a right-turn la
   assert.equal(s.sim.status, "running");
   const m = new HudReadModel(s).read();
   assert.equal(m.streams.length, 4);
-  assert.ok(m.satisfaction.value > 0 && m.satisfaction.multiplier > 0 && m.income.base > 0 && m.tow.cost > 0);
+  assert.ok(m.multiplier.value >= m.multiplier.min && m.multiplier.max > m.multiplier.min && m.congestion.value === 0 && m.tow.cost > 0);
 });
 
 const firstMap = shipped[0];
@@ -124,11 +124,6 @@ test("first level pacing: doing nothing fails early, sensible play lasts the tar
   assert.ok(idle < 420, `idle ends before 7 min (${idle.toFixed(0)}s)`);
   assert.ok(careful > 540 && charger > 540, `sensible bots last past 9 min (${careful.toFixed(0)}s, ${charger.toFixed(0)}s)`);
   assert.ok(careful > idle + 180);
-});
-
-test("holding and releasing earns more than only ever cycling: the risk/reward is real", () => {
-  const sum = (make) => [1, 2, 3].reduce((a, seed) => a + play(firstMap, make(), { seed, maxSeconds: 420 }).earned, 0);
-  assert.ok(sum(() => makeBot("charger", botPhases)) > sum(() => makeBot("greedy", botPhases)) * 1.03);
 });
 
 test("the first map is physically large, with more exits than entries, and every level is tuned by gate data", () => {

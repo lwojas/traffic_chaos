@@ -191,7 +191,6 @@ const level = {
   },
   gridlock: { fullSeconds: 8 },
   incidents: { duration: 15 },
-  scoring: { perVehicle: 1, perIncident: 5 },
   roads,
   lanes,
   inputGates,

@@ -66,14 +66,12 @@
     },
     "silver": {
       "time": 540,
-      "earned": 3000,
-      "satisfaction": 0.6
+      "score": 3000
     },
     "gold": {
       "time": 720,
-      "earned": 6000,
-      "maxIncidents": 2,
-      "satisfaction": 0.6
+      "score": 6000,
+      "maxIncidents": 2
     }
   },
   "gridlock": {

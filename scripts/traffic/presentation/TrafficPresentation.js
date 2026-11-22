@@ -10,8 +10,7 @@ import { UI, Theme, world } from "../ui/theme.js";
 import { toCss } from "../ui/themes.js";
 
 const _p = { x: 0, y: 0, angle: 0 };
-const FLOAT_MIN_GAIN = 0.006; // a car worth less than this (about 0.6% of the meter) gets no popup
-const FLOAT_BIG_GAIN = 0.03;
+const EXIT_HIGH_MULTIPLIER = 3; // exits paid at or above this get the highlight colour
 
 // Phaser-side view of a TrafficSession. Reads ECS state and draws it; owns no
 // simulation state and never writes back into the world. The only way it changes
@@ -75,13 +74,15 @@ export class TrafficPresentation {
     this.floats = [];
     this.towDelay = session.sim.interventions.tow?.delay ?? 3;
     const events = session.events;
-    // A car that waited a long time and finally moves: show what it was worth
-    events.on(TrafficEvents.SATISFACTION_GAIN, (vehicle, gain) => {
-      if (gain < FLOAT_MIN_GAIN) return;
+    // The reward event: a car reached an exit. Points at the multiplier it was paid at, cash beneath.
+    // The popup grows with the multiplier, so a run of exits at a high multiplier reads bigger.
+    events.on(TrafficEvents.VEHICLE_COMPLETED, (vehicle, gate, reward) => {
       const p = vehicle.components.Position;
-      const big = gain >= FLOAT_BIG_GAIN;
       const w = world();
-      this.float(`+${Math.round(gain * 100)}%`, p.x, p.y - 14, big ? w.cashBig : w.cash, big ? "800 20px Epilogue, system-ui" : "800 15px Epilogue, system-ui");
+      const high = reward.multiplier >= EXIT_HIGH_MULTIPLIER;
+      const size = Math.min(26, Math.round(13 + reward.multiplier * 2));
+      this.float(`+${Math.round(reward.points)}  ×${reward.multiplier.toFixed(1)}`, p.x, p.y - 14, high ? w.cashBig : w.cash, `800 ${size}px Epilogue, system-ui`);
+      this.float(`$${Math.round(reward.cash)}`, p.x, p.y + 6, w.cash, "800 12px Epilogue, system-ui", 1.1);
     });
 
     this.debugSystem = new DebugSystem({ testSprite: false });

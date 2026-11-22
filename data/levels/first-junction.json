@@ -47,10 +47,6 @@
   "incidents": {
     "duration": 14
   },
-  "scoring": {
-    "perVehicle": 1,
-    "perIncident": 5
-  },
   "roads": [
     {
       "id": "road_v0",
@@ -1523,12 +1519,11 @@
   },
   "progression": {
     "order": 1,
-    "blurb": "Two entries, three exits. Hold a line of cars, then let them go. Hold too long and the queue backs into the junction.",
+    "blurb": "Two entries, three exits. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.",
     "teaches": [
       "signals",
       "queues",
-      "release",
-      "satisfaction"
+      "congestion"
     ]
   },
   "goal": {
@@ -1540,13 +1535,11 @@
     },
     "silver": {
       "time": 540,
-      "earned": 1900,
-      "satisfaction": 0.62
+      "score": 4000
     },
     "gold": {
       "time": 720,
-      "earned": 3400,
-      "satisfaction": 0.74,
+      "score": 7000,
       "maxIncidents": 3
     }
   }

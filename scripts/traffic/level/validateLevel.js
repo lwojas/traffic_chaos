@@ -8,8 +8,8 @@ const TURNS = ["left", "straight", "right", "uturn"];
 const LANE_KINDS = ["approach", "exit"];
 const LIGHT_QUALITY = ["low", "medium", "high"];
 export const MEDALS = ["bronze", "silver", "gold"];
-// time: seconds survived, earned: income earned, satisfaction: average satisfaction 0..1, maxIncidents: at most this many
-export const RATING_KEYS = ["time", "earned", "satisfaction", "maxIncidents"];
+// time: seconds survived, score: points from exits, maxIncidents: at most this many
+export const RATING_KEYS = ["time", "score", "maxIncidents"];
 
 export class LevelValidationError extends Error {
   constructor(levelId, errors) {
@@ -250,13 +250,10 @@ export function validateLevel(level, options = {}) {
   optNum("gridlock.fullSeconds", level.gridlock?.fullSeconds);
   optNum("incidents.duration", level.incidents?.duration, 0.001);
   optNum("scoring.perVehicle", level.scoring?.perVehicle);
-  optNum("scoring.perIncident", level.scoring?.perIncident);
-  for (const key of ["economy", "satisfaction", "multiplier", "pressure", "interventions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
-  optNum("economy.incomePerSecond", level.economy?.incomePerSecond);
+  for (const key of ["economy", "multiplier", "pressure", "interventions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
+  optNum("economy.cashPerVehicle", level.economy?.cashPerVehicle);
   optNum("economy.startCash", level.economy?.startCash);
-  for (const key of ["start", "rest", "restSeconds", "grace", "fullWait", "curve", "drainMax", "drainK", "gateWeight", "gain", "gainRef", "gainCurve", "recoverSeconds", "refEntries"]) optNum(`satisfaction.${key}`, level.satisfaction?.[key]);
-  optNum("multiplier.min", level.multiplier?.min);
-  optNum("multiplier.max", level.multiplier?.max);
+  for (const key of ["min", "max", "calm", "jam", "riseGain", "fallGain", "fallSeconds"]) optNum(`multiplier.${key}`, level.multiplier?.[key]);
   if (level.pressure?.riskBands !== undefined && !(Array.isArray(level.pressure.riskBands) && level.pressure.riskBands.every(isNum))) err("pressure.riskBands", "must be an array of numbers");
   if (isObject(level.interventions)) for (const [id, cfg] of Object.entries(level.interventions)) for (const [k, v] of Object.entries(cfg ?? {})) optNum(`interventions.${id}.${k}`, v);
   optNum("goal.surviveSeconds", level.goal?.surviveSeconds, 1);

@@ -83,7 +83,6 @@ const level = {
   },
   gridlock: { fullSeconds: 6 },
   incidents: { duration: 15 },
-  scoring: { perVehicle: 1, perIncident: 5 },
   roads: [
     { id: "road_ns", name: "Mill Lane", points: [[CX, 0], [CX, H]], width: HALF * 2 },
     { id: "road_ew", name: "Quarry Road", points: [[0, CY], [W, CY]], width: HALF * 2 },

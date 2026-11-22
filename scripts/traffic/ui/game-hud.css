@@ -108,7 +108,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hud-alert[data-level="warn"] { color: var(--theme-warning); }
 .hud-alert[data-level="critical"] { color: var(--theme-danger); animation: hud-pulse 0.8s ease-in-out infinite; }
 
-/* ---- Reward: satisfaction + funds (top-centre) ---- */
+/* ---- Reward: multiplier + score + cash (top-centre) ---- */
 .hud-reward { display: flex; align-items: stretch; gap: 14px; padding: 10px 12px 10px 16px; }
 .hud-cash { display: flex; flex-direction: column; gap: 5px; position: relative; }
 .hud-tiles { display: flex; align-items: flex-end; gap: 4px; padding: 4px; background: var(--theme-surface-recessed); border-radius: var(--theme-radius-md); }
@@ -117,19 +117,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hud-tile.hot { background: var(--theme-tile-hot-background); color: var(--theme-tile-hot-text); }
 .hud-tile-sep { color: var(--theme-text-secondary); font: 800 18px var(--theme-font-number); margin: 0 -1px; }
 .hud-tiles::before { content: "$"; align-self: center; padding: 0 4px 0 6px; font: 800 18px var(--theme-font-number); color: var(--theme-text-secondary); }
-.hud-cash-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.hud-rate { font: 800 12px var(--theme-font-number); color: var(--theme-income-positive); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.hud-sat-chip { display: flex; flex-direction: column; gap: 6px; justify-content: center; width: 184px; box-sizing: border-box; padding: 8px 12px; background: var(--theme-surface-recessed); border-radius: var(--theme-radius-md); --sat: var(--theme-satisfaction); }
-.hud-sat-chip[data-band="1"] { --sat: var(--theme-satisfaction-warning); }
-.hud-sat-chip[data-band="2"] { --sat: var(--theme-satisfaction-critical); }
-.hud-sat-head { display: flex; align-items: center; gap: 6px; color: var(--theme-text-secondary); }
-.hud-sat-x { margin-left: auto; font: 800 17px var(--theme-font-number); color: var(--theme-income-multiplier); font-variant-numeric: tabular-nums; }
-.hud-sat-track { height: 8px; background: var(--theme-control-hover); }
-.hud-sat-chip .hud-fill { background: var(--sat); transition: width 0.35s ease-out, background 0.3s; }
-.hud-sat-chip.surge .hud-fill { box-shadow: 0 0 10px -1px var(--sat); }
-.hud-sat-why { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 700 11px var(--theme-font-label); letter-spacing: 0.04em; color: var(--theme-text-secondary); font-variant-numeric: tabular-nums; }
-.hud-sat-why.up { color: var(--theme-income-positive); }
-.hud-sat-why.down { color: var(--sat); }
+.hud-score { display: flex; flex-direction: column; gap: 5px; width: 104px; }
+.hud-score-value { font: 800 28px / 40px var(--theme-font-number); color: var(--theme-text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hud-mult-chip { display: flex; flex-direction: column; gap: 6px; justify-content: center; width: 184px; box-sizing: border-box; padding: 8px 12px; background: var(--theme-surface-recessed); border-radius: var(--theme-radius-md); --mult: var(--theme-income-multiplier); }
+.hud-mult-head { display: flex; align-items: center; gap: 6px; color: var(--theme-text-secondary); }
+.hud-mult-x { margin-left: auto; font: 800 22px var(--theme-font-number); color: var(--mult); font-variant-numeric: tabular-nums; }
+.hud-mult-track { height: 8px; background: var(--theme-control-hover); }
+.hud-mult-chip .hud-fill { background: var(--mult); transition: width 0.35s ease-out; }
+.hud-mult-chip.max .hud-fill { box-shadow: 0 0 10px -1px var(--mult); }
+.hud-mult-why { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 700 11px var(--theme-font-label); letter-spacing: 0.04em; color: var(--theme-income-positive); font-variant-numeric: tabular-nums; }
+.hud-mult-why.down { color: var(--theme-warning); }
+.hud-mult-chip[data-band="3"] .hud-mult-why.down { color: var(--theme-danger); }
+.hud-load.jump { cursor: pointer; }
+.hud-cost { white-space: nowrap; }
 
 /* ---- Controls (top-right) ---- */
 .hud-controls { display: flex; align-items: center; gap: 6px; padding: 8px 10px; position: relative; }

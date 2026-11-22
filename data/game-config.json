@@ -6,10 +6,9 @@
     "speeds": [1, 2, 4],
     "incidents": { "enabled": true, "duration": 15 },
     "gridlock": { "fullSeconds": 6 },
-    "scoring": { "perVehicle": 1, "perIncident": 5 },
-    "economy": { "incomePerSecond": 3, "startCash": 150 },
-    "satisfaction": { "start": 0.6, "rest": 0.6, "restSeconds": 45, "grace": 2, "fullWait": 30, "curve": 1.5, "drainMax": 0.05, "drainK": 6, "gateWeight": 0.5, "gain": 0.08, "gainRef": 20, "gainCurve": 1.3, "recoverSeconds": 3, "refEntries": 2 },
-    "multiplier": { "min": 0.25, "max": 2 },
+    "scoring": { "perVehicle": 10 },
+    "economy": { "cashPerVehicle": 3, "startCash": 150 },
+    "multiplier": { "min": 1, "max": 5, "calm": 0.2, "jam": 0.8, "riseGain": 0.5, "fallGain": 0.1, "fallSeconds": 2.5 },
     "pressure": { "riskBands": [0.35, 0.6, 0.85] },
     "interventions": { "tow": { "cost": 200, "costStep": 100, "cooldown": 20, "delay": 3 } }
   },

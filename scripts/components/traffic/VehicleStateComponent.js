@@ -23,7 +23,6 @@ export class VehicleStateComponent {
     this.braking = false;
     this.angle = 0;
     this.waitTime = 0; // total seconds spent stopped on approach lanes
-    this.spell = 0; // seconds held in the current wait (reset when it enters a junction); satisfaction reads this
     this.stillTime = 0; // consecutive seconds with speed ~0
     this.blockedAtLine = 0; // consecutive seconds held at a green line with no room beyond
     this.arrived = false; // reached the end of its route; the output gate removes it
