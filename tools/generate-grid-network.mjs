@@ -12,11 +12,13 @@ import { applyMeta } from "./levelMeta.mjs";
 
 // Variants:  node tools/generate-grid-network.mjs            -> network_02 (3x2 City Grid)
 //            node tools/generate-grid-network.mjs connected  -> network_03 (2x1, two junctions on one road)
-//            node tools/generate-grid-network.mjs start      -> first_junction (2x2, 3 entries / 1 exit)
+//            node tools/generate-grid-network.mjs start      -> first_junction (2x2, 4 entries / 1 exit, left turns)
 // `entries` / `exits` (gate names such as W1, N2) make a gate entry-only or exit-only; omitted = every edge arm is both.
+// `lefts: true` adds a left-turn movement and its own signal group (one per arm, so opposing lefts are never forced
+// green together) at every junction, plus left routes. A left shares the straight approach lane (lane 0), like a link lane.
 const VARIANTS = {
   connected: { cols: 2, rows: 1, id: "network_03", name: "Connected Junctions", file: "network-03.json", dx: 900 },
-  start: { cols: 2, rows: 2, id: "first_junction", name: "Mill Town", file: "first-junction.json", dx: 1100, entries: ["W1", "N2", "W2"], exits: ["S2"] },
+  start: { cols: 2, rows: 2, id: "first_junction", name: "Mill Town", file: "first-junction.json", dx: 1100, entries: ["W1", "N2", "W2", "E2"], exits: ["S2"], lefts: true },
 };
 // One network, three levels: only the entry set changes. Exits are always the south edge, so each extra entry is pure added demand.
 const CITY = { cols: 3, rows: 2, dx: 1000, exits: ["S1", "S2", "S3"] };
@@ -32,6 +34,7 @@ const DIR = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 const RIGHT_VEC = { n: [-1, 0], s: [1, 0], e: [0, -1], w: [0, 1] }; // driver's right when inbound on that arm
 const OPP = { n: "s", s: "n", e: "w", w: "e" };
 const RIGHT_OF = { n: "w", w: "s", s: "e", e: "n" }; // exit arm after a right turn from this arm
+const LEFT_OF = { n: "e", e: "s", s: "w", w: "n" }; // exit arm after a left turn from this arm
 const STEP = { n: [-1, 0], s: [1, 0], e: [0, 1], w: [0, -1] }; // [dRow, dCol] to the neighbouring junction
 const isNS = (a) => a === "n" || a === "s";
 
@@ -88,6 +91,7 @@ for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) for (const arm of 
   laneIds.inbound[`${nr},${nc},${OPP[arm]}`] = [id];
 }
 
+const LEFTS = Boolean(VARIANT.lefts);
 const inboundLane = (r, c, arm, turn) => {
   const l = laneIds.inbound[`${r},${c},${arm}`];
   return turn === "right" && l.length > 1 ? l[1] : l[0];
@@ -104,17 +108,21 @@ for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     const axis = isNS(arm) ? "ns" : "ew";
     movements.push({ id: `mv_${J}_${arm}_straight`, from: inboundLane(r, c, arm, "straight"), to: outLane(r, c, OPP[arm]), turn: "straight", signalGroup: `sg_${J}_${axis}_straight` });
     movements.push({ id: `mv_${J}_${arm}_right`, from: inboundLane(r, c, arm, "right"), to: outLane(r, c, RIGHT_OF[arm]), turn: "right", signalGroup: `sg_${J}_${axis}_turn` });
+    if (LEFTS) movements.push({ id: `mv_${J}_${arm}_left`, from: inboundLane(r, c, arm, "left"), to: outLane(r, c, LEFT_OF[arm]), turn: "left", signalGroup: `sg_${J}_${arm}_left` });
   }
   junctions.push({ id: J, bounds: { x: cx - HALF, y: cy - HALF, w: HALF * 2, h: HALF * 2 }, movements });
   for (const [axis, kind, label] of [["ns", "straight", "NS STRAIGHT"], ["ns", "turn", "NS TURN"], ["ew", "straight", "EW STRAIGHT"], ["ew", "turn", "EW TURN"]])
     signalGroups.push({ id: `sg_${J}_${axis}_${kind}`, junction: J, label: `${jname(r, c)} ${label}`, initial: axis === "ns" && kind === "straight" ? "green" : "red" });
+  if (LEFTS) for (const arm of Object.keys(DIR))
+    signalGroups.push({ id: `sg_${J}_${arm}_left`, junction: J, label: `${jname(r, c)} ${arm.toUpperCase()} LEFT`, initial: "red" });
 }
 
 // Routes: from each edge input, straight through, or one right turn at the 1st or 2nd junction
 const routes = [];
 const inputGates = [];
 const outputGates = [];
-const ROUTE_WEIGHTS = { straight: 6, right0: 2, right1: 1.5 };
+const ROUTE_WEIGHTS = { straight: 6, right0: 2, right1: 1.5, left0: 2, left1: 1.5 };
+const ROUTE_KINDS = [["straight", -1, "right"], ["right0", 0, "right"], ["right1", 1, "right"], ...(LEFTS ? [["left0", 0, "left"], ["left1", 1, "left"]] : [])];
 for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) for (const arm of Object.keys(DIR)) {
   if (neighbour(r, c, arm)) continue;
   const name = gateName(r, c, arm);
@@ -123,14 +131,14 @@ for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) for (const arm of 
   if (isExit) outputGates.push({ id: `output_${name.toLowerCase()}`, label: `OUTPUT ${name}`, lane: outLane(r, c, arm) });
   if (!isEntry) continue;
   const gate = { id: `input_${name.toLowerCase()}`, label: `INPUT ${name}`, lanes: laneIds.inbound[`${r},${c},${arm}`], queueCapacity: 12, demand: { curve: "rush-hour" }, routes: [] };
-  for (const [kind, turnAt] of [["straight", -1], ["right0", 0], ["right1", 1]]) {
+  for (const [kind, turnAt, turnKind] of ROUTE_KINDS) {
     const steps = [];
     let cr = r, cc = c, a = arm, hop = 0, lastArm = name;
     for (;;) {
-      const turn = hop === turnAt ? "right" : "straight";
+      const turn = hop === turnAt ? turnKind : "straight";
       if (hop === 0) steps.push(inboundLane(cr, cc, a, turn));
       steps.push(`mv_${jid(cr, cc)}_${a}_${turn}`);
-      const exitArm = turn === "right" ? RIGHT_OF[a] : OPP[a];
+      const exitArm = turn === "right" ? RIGHT_OF[a] : turn === "left" ? LEFT_OF[a] : OPP[a];
       steps.push(outLane(cr, cc, exitArm));
       const nb = neighbour(cr, cc, exitArm);
       if (!nb) { lastArm = gateName(cr, cc, exitArm); break; }

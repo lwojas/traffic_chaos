@@ -129,7 +129,7 @@ test("first level pacing: the first map is under constant pressure, doing nothin
 test("the first map is physically large, with a single exit, and every level is tuned by gate data", () => {
   assert.ok(firstMap.map.width >= 2000 && firstMap.map.height >= 1400, "not a single crossroads on a small canvas");
   assert.ok(firstMap.junctions.length >= 3);
-  assert.equal(firstMap.inputGates.length, 3);
+  assert.equal(firstMap.inputGates.length, 4);
   assert.equal(firstMap.outputGates.length, 1);
   assert.ok(firstMap.outputGates.every((g) => !g.outflowPerMinute), "the first exit is instant: cars vanish at the gate, no discharge cap");
   assert.ok(networkBalance(firstMap).pressure > 0.8, "the first map is pressured from the start: waiting does not win");
@@ -148,7 +148,7 @@ test("level difficulty rises with the entry/exit ratio on the same network", () 
 
 test("network balance reports pressure from demand, exits and their capacity", () => {
   const nb = networkBalance(firstMap);
-  assert.equal(nb.inputs, 3);
+  assert.equal(nb.inputs, 4);
   assert.equal(nb.outputs, 1);
   assert.ok(nb.capacity > 0 && nb.demand > 0 && nb.exits.length === 1);
   const capped = structuredClone(firstMap);

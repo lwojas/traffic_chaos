@@ -21,23 +21,23 @@
     "shift": [
       {
         "time": 0,
-        "rate": 0.2
+        "rate": 0.15
       },
       {
         "time": 120,
-        "rate": 0.24
+        "rate": 0.18
       },
       {
         "time": 300,
-        "rate": 0.28
+        "rate": 0.21
       },
       {
         "time": 480,
-        "rate": 0.32
+        "rate": 0.24
       },
       {
         "time": 660,
-        "rate": 0.36
+        "rate": 0.27
       }
     ]
   },
@@ -725,6 +725,24 @@
           "weight": 1.5
         }
       ]
+    },
+    {
+      "id": "input_e2",
+      "label": "INPUT E2",
+      "lanes": [
+        "lane_j_1_1_e_in_0",
+        "lane_j_1_1_e_in_1"
+      ],
+      "queueCapacity": 8,
+      "demand": {
+        "curve": "shift"
+      },
+      "routes": [
+        {
+          "route": "route_e2_left0",
+          "weight": 2
+        }
+      ]
     }
   ],
   "outputGates": [
@@ -759,6 +777,13 @@
           "signalGroup": "sg_j_0_0_ns_turn"
         },
         {
+          "id": "mv_j_0_0_n_left",
+          "from": "lane_j_0_0_n_in_0",
+          "to": "link_j_0_0_j_0_1",
+          "turn": "left",
+          "signalGroup": "sg_j_0_0_n_left"
+        },
+        {
           "id": "mv_j_0_0_s_straight",
           "from": "link_j_1_0_j_0_0",
           "to": "lane_j_0_0_n_out",
@@ -771,6 +796,13 @@
           "to": "link_j_0_0_j_0_1",
           "turn": "right",
           "signalGroup": "sg_j_0_0_ns_turn"
+        },
+        {
+          "id": "mv_j_0_0_s_left",
+          "from": "link_j_1_0_j_0_0",
+          "to": "lane_j_0_0_w_out",
+          "turn": "left",
+          "signalGroup": "sg_j_0_0_s_left"
         },
         {
           "id": "mv_j_0_0_e_straight",
@@ -787,6 +819,13 @@
           "signalGroup": "sg_j_0_0_ew_turn"
         },
         {
+          "id": "mv_j_0_0_e_left",
+          "from": "link_j_0_1_j_0_0",
+          "to": "link_j_0_0_j_1_0",
+          "turn": "left",
+          "signalGroup": "sg_j_0_0_e_left"
+        },
+        {
           "id": "mv_j_0_0_w_straight",
           "from": "lane_j_0_0_w_in_0",
           "to": "link_j_0_0_j_0_1",
@@ -799,6 +838,13 @@
           "to": "link_j_0_0_j_1_0",
           "turn": "right",
           "signalGroup": "sg_j_0_0_ew_turn"
+        },
+        {
+          "id": "mv_j_0_0_w_left",
+          "from": "lane_j_0_0_w_in_0",
+          "to": "lane_j_0_0_n_out",
+          "turn": "left",
+          "signalGroup": "sg_j_0_0_w_left"
         }
       ]
     },
@@ -826,6 +872,13 @@
           "signalGroup": "sg_j_0_1_ns_turn"
         },
         {
+          "id": "mv_j_0_1_n_left",
+          "from": "lane_j_0_1_n_in_0",
+          "to": "lane_j_0_1_e_out",
+          "turn": "left",
+          "signalGroup": "sg_j_0_1_n_left"
+        },
+        {
           "id": "mv_j_0_1_s_straight",
           "from": "link_j_1_1_j_0_1",
           "to": "lane_j_0_1_n_out",
@@ -838,6 +891,13 @@
           "to": "lane_j_0_1_e_out",
           "turn": "right",
           "signalGroup": "sg_j_0_1_ns_turn"
+        },
+        {
+          "id": "mv_j_0_1_s_left",
+          "from": "link_j_1_1_j_0_1",
+          "to": "link_j_0_1_j_0_0",
+          "turn": "left",
+          "signalGroup": "sg_j_0_1_s_left"
         },
         {
           "id": "mv_j_0_1_e_straight",
@@ -854,6 +914,13 @@
           "signalGroup": "sg_j_0_1_ew_turn"
         },
         {
+          "id": "mv_j_0_1_e_left",
+          "from": "lane_j_0_1_e_in_0",
+          "to": "link_j_0_1_j_1_1",
+          "turn": "left",
+          "signalGroup": "sg_j_0_1_e_left"
+        },
+        {
           "id": "mv_j_0_1_w_straight",
           "from": "link_j_0_0_j_0_1",
           "to": "lane_j_0_1_e_out",
@@ -866,6 +933,13 @@
           "to": "link_j_0_1_j_1_1",
           "turn": "right",
           "signalGroup": "sg_j_0_1_ew_turn"
+        },
+        {
+          "id": "mv_j_0_1_w_left",
+          "from": "link_j_0_0_j_0_1",
+          "to": "lane_j_0_1_n_out",
+          "turn": "left",
+          "signalGroup": "sg_j_0_1_w_left"
         }
       ]
     },
@@ -893,6 +967,13 @@
           "signalGroup": "sg_j_1_0_ns_turn"
         },
         {
+          "id": "mv_j_1_0_n_left",
+          "from": "link_j_0_0_j_1_0",
+          "to": "link_j_1_0_j_1_1",
+          "turn": "left",
+          "signalGroup": "sg_j_1_0_n_left"
+        },
+        {
           "id": "mv_j_1_0_s_straight",
           "from": "lane_j_1_0_s_in_0",
           "to": "link_j_1_0_j_0_0",
@@ -905,6 +986,13 @@
           "to": "link_j_1_0_j_1_1",
           "turn": "right",
           "signalGroup": "sg_j_1_0_ns_turn"
+        },
+        {
+          "id": "mv_j_1_0_s_left",
+          "from": "lane_j_1_0_s_in_0",
+          "to": "lane_j_1_0_w_out",
+          "turn": "left",
+          "signalGroup": "sg_j_1_0_s_left"
         },
         {
           "id": "mv_j_1_0_e_straight",
@@ -921,6 +1009,13 @@
           "signalGroup": "sg_j_1_0_ew_turn"
         },
         {
+          "id": "mv_j_1_0_e_left",
+          "from": "link_j_1_1_j_1_0",
+          "to": "lane_j_1_0_s_out",
+          "turn": "left",
+          "signalGroup": "sg_j_1_0_e_left"
+        },
+        {
           "id": "mv_j_1_0_w_straight",
           "from": "lane_j_1_0_w_in_0",
           "to": "link_j_1_0_j_1_1",
@@ -933,6 +1028,13 @@
           "to": "lane_j_1_0_s_out",
           "turn": "right",
           "signalGroup": "sg_j_1_0_ew_turn"
+        },
+        {
+          "id": "mv_j_1_0_w_left",
+          "from": "lane_j_1_0_w_in_0",
+          "to": "link_j_1_0_j_0_0",
+          "turn": "left",
+          "signalGroup": "sg_j_1_0_w_left"
         }
       ]
     },
@@ -960,6 +1062,13 @@
           "signalGroup": "sg_j_1_1_ns_turn"
         },
         {
+          "id": "mv_j_1_1_n_left",
+          "from": "link_j_0_1_j_1_1",
+          "to": "lane_j_1_1_e_out",
+          "turn": "left",
+          "signalGroup": "sg_j_1_1_n_left"
+        },
+        {
           "id": "mv_j_1_1_s_straight",
           "from": "lane_j_1_1_s_in_0",
           "to": "link_j_1_1_j_0_1",
@@ -972,6 +1081,13 @@
           "to": "lane_j_1_1_e_out",
           "turn": "right",
           "signalGroup": "sg_j_1_1_ns_turn"
+        },
+        {
+          "id": "mv_j_1_1_s_left",
+          "from": "lane_j_1_1_s_in_0",
+          "to": "link_j_1_1_j_1_0",
+          "turn": "left",
+          "signalGroup": "sg_j_1_1_s_left"
         },
         {
           "id": "mv_j_1_1_e_straight",
@@ -988,6 +1104,13 @@
           "signalGroup": "sg_j_1_1_ew_turn"
         },
         {
+          "id": "mv_j_1_1_e_left",
+          "from": "lane_j_1_1_e_in_0",
+          "to": "lane_j_1_1_s_out",
+          "turn": "left",
+          "signalGroup": "sg_j_1_1_e_left"
+        },
+        {
           "id": "mv_j_1_1_w_straight",
           "from": "link_j_1_0_j_1_1",
           "to": "lane_j_1_1_e_out",
@@ -1000,6 +1123,13 @@
           "to": "lane_j_1_1_s_out",
           "turn": "right",
           "signalGroup": "sg_j_1_1_ew_turn"
+        },
+        {
+          "id": "mv_j_1_1_w_left",
+          "from": "link_j_1_0_j_1_1",
+          "to": "link_j_1_1_j_0_1",
+          "turn": "left",
+          "signalGroup": "sg_j_1_1_w_left"
         }
       ]
     }
@@ -1030,6 +1160,30 @@
       "initial": "red"
     },
     {
+      "id": "sg_j_0_0_n_left",
+      "junction": "j_0_0",
+      "label": "A1 N LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_0_s_left",
+      "junction": "j_0_0",
+      "label": "A1 S LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_0_e_left",
+      "junction": "j_0_0",
+      "label": "A1 E LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_0_w_left",
+      "junction": "j_0_0",
+      "label": "A1 W LEFT",
+      "initial": "red"
+    },
+    {
       "id": "sg_j_0_1_ns_straight",
       "junction": "j_0_1",
       "label": "A2 NS STRAIGHT",
@@ -1051,6 +1205,30 @@
       "id": "sg_j_0_1_ew_turn",
       "junction": "j_0_1",
       "label": "A2 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_n_left",
+      "junction": "j_0_1",
+      "label": "A2 N LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_s_left",
+      "junction": "j_0_1",
+      "label": "A2 S LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_e_left",
+      "junction": "j_0_1",
+      "label": "A2 E LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_0_1_w_left",
+      "junction": "j_0_1",
+      "label": "A2 W LEFT",
       "initial": "red"
     },
     {
@@ -1078,6 +1256,30 @@
       "initial": "red"
     },
     {
+      "id": "sg_j_1_0_n_left",
+      "junction": "j_1_0",
+      "label": "B1 N LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_0_s_left",
+      "junction": "j_1_0",
+      "label": "B1 S LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_0_e_left",
+      "junction": "j_1_0",
+      "label": "B1 E LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_0_w_left",
+      "junction": "j_1_0",
+      "label": "B1 W LEFT",
+      "initial": "red"
+    },
+    {
       "id": "sg_j_1_1_ns_straight",
       "junction": "j_1_1",
       "label": "B2 NS STRAIGHT",
@@ -1099,6 +1301,30 @@
       "id": "sg_j_1_1_ew_turn",
       "junction": "j_1_1",
       "label": "B2 EW TURN",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_n_left",
+      "junction": "j_1_1",
+      "label": "B2 N LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_s_left",
+      "junction": "j_1_1",
+      "label": "B2 S LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_e_left",
+      "junction": "j_1_1",
+      "label": "B2 E LEFT",
+      "initial": "red"
+    },
+    {
+      "id": "sg_j_1_1_w_left",
+      "junction": "j_1_1",
+      "label": "B2 W LEFT",
       "initial": "red"
     }
   ],
@@ -1132,6 +1358,14 @@
         "mv_j_1_0_w_straight",
         "link_j_1_0_j_1_1",
         "mv_j_1_1_w_right",
+        "lane_j_1_1_s_out"
+      ]
+    },
+    {
+      "id": "route_e2_left0",
+      "steps": [
+        "lane_j_1_1_e_in_0",
+        "mv_j_1_1_e_left",
         "lane_j_1_1_s_out"
       ]
     }
@@ -1506,7 +1740,7 @@
   },
   "progression": {
     "order": 1,
-    "blurb": "Three entries, one exit. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.",
+    "blurb": "Four entries, one exit, and left turns. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.",
     "teaches": [
       "signals",
       "queues",

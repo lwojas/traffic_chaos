@@ -5,7 +5,8 @@ import { pointAt } from "../util/geometry.js";
 // (no ECS, no Phaser): one control per (signal group, approach lane) pair,
 // placed beside that lane's stop line on the roadside, so the control belongs
 // to the light and the movement it governs. Controls on the same approach arm
-// are stacked back along the lane.
+// are stacked back along the lane: the turn controls (left, then right) sit
+// nearest the junction and the straight control below them (further upstream).
 //
 // Returns [{ id, groupId, laneId, junctionId, label, direction, x, y, heading, turns, routes, approach }]
 //   heading    direction of travel on the approach lane (radians)
@@ -16,6 +17,7 @@ import { pointAt } from "../util/geometry.js";
 // `id` is also the stream id (see StreamSystem), so the world control and the
 // simulation's queue/reward numbers are looked up by the same key.
 export const DEFAULT_PLACEMENT = { size: 46, gap: 4, roadsideMargin: 4 };
+const TURN_RANK = { left: 0, right: 1, straight: 2, uturn: 3 }; // stack order, nearest the stop line first
 const COMPASS = ["Eastbound", "Southbound", "Westbound", "Northbound"]; // screen space: +y is south
 
 export function headingName(angle) {
@@ -51,7 +53,6 @@ export function computeSignalControls(level, compiled = compileLevel(level), opt
 
   const out = [];
   for (const members of arms.values()) {
-    // Outermost lane first: the roadside is on the driver's right
     const info = members.map((pair) => {
       const lane = compiled.lanes.get(pair.laneId);
       pointAt(lane.path, lane.stopLineS, p);
@@ -59,8 +60,9 @@ export function computeSignalControls(level, compiled = compileLevel(level), opt
       const ry = Math.cos(p.angle);
       return { pair, lane, x: p.x, y: p.y, angle: p.angle, rx, ry, lateral: p.x * rx + p.y * ry };
     });
-    info.sort((a, b) => b.lateral - a.lateral || a.pair.groupId.localeCompare(b.pair.groupId));
-    const outer = info[0];
+    const outer = info.reduce((best, i) => (i.lateral > best.lateral ? i : best)); // outermost lane: the roadside is on the driver's right
+    const rank = (i) => Math.min(...i.pair.turns.map((t) => TURN_RANK[t] ?? 9));
+    info.sort((a, b) => rank(a) - rank(b) || b.lateral - a.lateral || a.pair.groupId.localeCompare(b.pair.groupId));
     const road = roads.get(outer.lane.road);
     const roadHalf = (road?.width ?? 80) / 2;
     const roadLateral = road ? distanceToPolyline(road.points, outer.x, outer.y) : roadHalf - 10;
