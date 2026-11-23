@@ -24,25 +24,25 @@
         "rate": 0.15
       },
       {
-        "time": 120,
-        "rate": 0.18
+        "time": 90,
+        "rate": 0.2
       },
       {
-        "time": 300,
-        "rate": 0.21
+        "time": 240,
+        "rate": 0.26
       },
       {
-        "time": 480,
-        "rate": 0.24
+        "time": 420,
+        "rate": 0.31
       },
       {
         "time": 660,
-        "rate": 0.27
+        "rate": 0.36
       }
     ]
   },
   "gridlock": {
-    "fullSeconds": 10
+    "fullSeconds": 6
   },
   "incidents": {
     "duration": 14
@@ -1370,7 +1370,35 @@
       ]
     }
   ],
-  "obstacles": [],
+  "obstacles": [
+    {
+      "id": "roadworks_a",
+      "kind": "roadworks",
+      "at": 150,
+      "duration": 30,
+      "blockedLanes": [
+        "link_j_0_0_j_0_1"
+      ]
+    },
+    {
+      "id": "roadworks_b",
+      "kind": "roadworks",
+      "at": 330,
+      "duration": 35,
+      "blockedLanes": [
+        "link_j_1_0_j_1_1"
+      ]
+    },
+    {
+      "id": "roadworks_c",
+      "kind": "roadworks",
+      "at": 520,
+      "duration": 40,
+      "blockedLanes": [
+        "link_j_0_1_j_1_1"
+      ]
+    }
+  ],
   "buildings": [
     {
       "id": "bld_0",

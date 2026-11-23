@@ -10,12 +10,18 @@ export const META = {
   first_junction: {
     name: "Mill Town",
     progression: { order: 1, blurb: "Four entries, one exit, and left turns. Every car that gets through pays; queues cost you multiplier, and a queue that backs into the junction ends the shift.", teaches: ["signals", "queues", "congestion"] },
-    demandCurves: ramp([[0, 0.15], [120, 0.18], [300, 0.21], [480, 0.24], [660, 0.27]]),
+    demandCurves: ramp([[0, 0.15], [90, 0.2], [240, 0.26], [420, 0.31], [660, 0.36]]),
     curve: "shift",
     goal: { surviveSeconds: 720 },
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 4000 }, gold: { time: 720, score: 7000, maxIncidents: 3 } },
-    gridlock: { fullSeconds: 10 },
+    gridlock: { fullSeconds: 6 },
     incidents: { duration: 14 },
+    // Roadworks close a link for a while: the streams behind it stall, so the player must re-prioritise mid-shift
+    obstacles: [
+      { id: "roadworks_a", kind: "roadworks", at: 150, duration: 30, blockedLanes: ["link_j_0_0_j_0_1"] },
+      { id: "roadworks_b", kind: "roadworks", at: 330, duration: 35, blockedLanes: ["link_j_1_0_j_1_1"] },
+      { id: "roadworks_c", kind: "roadworks", at: 520, duration: 40, blockedLanes: ["link_j_0_1_j_1_1"] },
+    ],
     inputs: { input_w1: { queueCapacity: 14 }, input_n2: { queueCapacity: 8 }, input_w2: { queueCapacity: 12 }, input_e2: { queueCapacity: 8 } },
     // Playtest bots only (not written to the level): one phase per entry; the merges are at j_0_1 and j_1_1, E2 turns left into the exit
     botPhases: [["sg_j_0_1_ns_straight", "sg_j_1_1_ns_straight"], ["sg_j_0_0_ew_straight", "sg_j_0_1_ew_turn", "sg_j_1_1_ns_straight"], ["sg_j_1_0_ew_straight", "sg_j_1_1_ew_turn"], ["sg_j_1_1_e_left"]],

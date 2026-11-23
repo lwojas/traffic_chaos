@@ -135,6 +135,13 @@ test("the first map is physically large, with a single exit, and every level is 
   assert.ok(networkBalance(firstMap).pressure > 0.8, "the first map is pressured from the start: waiting does not win");
 });
 
+test("the first map escalates: demand climbs steeply, the gridlock window is short, and roadworks close links mid-shift", () => {
+  const curve = firstMap.demandCurves.shift;
+  assert.ok(curve.at(-1).rate >= 2 * curve[0].rate, "demand at least doubles over the shift");
+  assert.ok(firstMap.gridlock.fullSeconds <= 6);
+  assert.ok(firstMap.obstacles.length >= 3 && firstMap.obstacles.every((o) => o.kind === "roadworks" && o.at > 0));
+});
+
 test("level difficulty rises with the entry/exit ratio on the same network", () => {
   const byId = Object.fromEntries(shipped.map((l) => [l.id, l]));
   const [a, b, c] = ["city_balanced", "city_rush", "city_crunch"].map((id) => byId[id]);
