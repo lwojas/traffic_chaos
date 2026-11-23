@@ -5,24 +5,21 @@ import { Segments } from "./Segments.js";
 const SEGMENTS = 20;
 const bandOf = (fill) => (fill >= 1 ? 3 : fill >= 0.85 ? 2 : fill >= 0.6 ? 1 : 0);
 
-// Top centre: the network's pressure gauges in one panel. The big segmented bar is congestion, the
-// number that sets the multiplier (the worst road's pressure, same colours as its signal control);
-// beneath it, one chunky bar per input gate shows how close that queue is to filling. A full queue
+// Top centre: the input queues in one panel. The big segmented bar is the combination of the gate
+// queues (all waiting cars / all queue capacity, coloured by the fullest gate); beneath it, one
+// chunky bar per input gate shows how close that queue is to filling. A full queue
 // is what ends the shift, so the bars animate on their own (CSS transitions, stripes and shaking as
-// they near the edge): watching one drain back from the brink is the point. Click the congestion
-// header to jump to the worst road, a gate bar to jump to that gate. When a queue is full the bottom
+// they near the edge): watching one drain back from the brink is the point. Click a gate bar
+// to jump to that gate. When a queue is full the bottom
 // line becomes the countdown to gridlock.
 export class CongestionDisplay {
   constructor(parent, gates, camera) {
     this.camera = camera;
-    this.worst = null;
     this.root = el("div", "hud-panel hud-meter");
 
-    const head = el("button", "hud-meter-head");
-    head.addEventListener("click", () => this.worst && this.camera.glideTo(this.worst.x, this.worst.y));
+    const head = el("div", "hud-meter-head");
     const title = el("span", "hud-label");
-    title.append(icon("grid", 14), " CONGESTION");
-    this.head = head;
+    title.append(icon("grid", 14), " QUEUES");
     this.percent = new Cell(el("b", "hud-meter-percent", "0%"));
     head.append(title, this.percent.node);
     this.gauge = el("div", "hud-gauge");
@@ -52,23 +49,25 @@ export class CongestionDisplay {
   }
 
   update(m) {
-    const c = m.congestion;
-    this.worst = c.worst;
-    this.head.classList.toggle("jump", !!c.worst);
-    this.percent.set(pct(c.value));
-    this.root.dataset.band = String(c.band);
-    this.segments.set(c.value, c.band >= 3);
     let worstQueue = 0;
+    let queued = 0;
+    let capacity = 0;
     for (let i = 0; i < this.rows.length; i++) {
       const g = m.gates[i];
       const r = this.rows[i];
       const band = bandOf(g.fill);
       worstQueue = Math.max(worstQueue, band);
+      queued += g.queued;
+      capacity += g.capacity;
       r.count.set(`${g.queued}/${g.capacity}`);
       r.fill.css("width", `${(g.fill * 100).toFixed(1)}%`);
       r.row.dataset.band = String(band);
       r.row.classList.toggle("full", g.full);
     }
+    const total = capacity ? queued / capacity : 0;
+    this.percent.set(pct(total));
+    this.root.dataset.band = String(worstQueue);
+    this.segments.set(total, worstQueue >= 3);
     this.root.classList.toggle("danger", worstQueue >= 2);
     const running = m.gridlockProgress > 0 && !m.gridlock;
     const left = Math.max(0, m.gridlockSeconds * (1 - m.gridlockProgress));

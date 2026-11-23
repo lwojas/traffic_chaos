@@ -5,8 +5,9 @@ import { pointAt } from "../util/geometry.js";
 // (no ECS, no Phaser): one control per (signal group, approach lane) pair,
 // placed beside that lane's stop line on the roadside, so the control belongs
 // to the light and the movement it governs. Controls on the same approach arm
-// are stacked back along the lane: the turn controls (left, then right) sit
-// nearest the junction and the straight control below them (further upstream).
+// are laid out as seen head-on (driving direction up): the turn controls sit side by side nearest
+// the junction (left on the driver's left, right on the driver's right) and the straight control
+// below them (further upstream), centred under the turn row.
 //
 // Returns [{ id, groupId, laneId, junctionId, label, direction, x, y, heading, turns, routes, approach }]
 //   heading    direction of travel on the approach lane (radians)
@@ -67,9 +68,19 @@ export function computeSignalControls(level, compiled = compileLevel(level), opt
     const roadHalf = (road?.width ?? 80) / 2;
     const roadLateral = road ? distanceToPolyline(road.points, outer.x, outer.y) : roadHalf - 10;
     const outerToEdge = Math.max(0, roadHalf - roadLateral);
-    info.forEach((i, k) => {
-      const outward = outerToEdge + (outer.lateral - i.lateral) + roadsideMargin + size / 2;
-      const back = size / 2 + k * (size + gap); // upstream of the stop line
+    // Rows: turn controls first (nearest the stop line), straight below. Within the turn row, left
+    // sits inboard of right. The roadside is on the driver's right, so "outward" grows to the right.
+    const isTurn = (i) => rank(i) < TURN_RANK.straight;
+    const turnRow = info.filter(isTurn).sort((a, b) => rank(a) - rank(b));
+    const step = size + gap;
+    const shift = new Map();
+    info.forEach((i) => {
+      const k = turnRow.indexOf(i);
+      shift.set(i, k >= 0 ? k * step : turnRow.length > 1 ? ((turnRow.length - 1) * step) / 2 : 0);
+    });
+    info.forEach((i) => {
+      const outward = outerToEdge + (outer.lateral - i.lateral) + roadsideMargin + size / 2 + shift.get(i);
+      const back = size / 2 + (isTurn(i) || !turnRow.length ? 0 : step); // upstream of the stop line
       const hx = Math.cos(i.angle);
       const hy = Math.sin(i.angle);
       out.push({

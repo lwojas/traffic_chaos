@@ -38,11 +38,15 @@ test("opposing left turns cross in the box, so they are real conflicts the playe
   assert.ok(has("mv_j_0_0_n_left", "mv_j_0_0_s_straight"), "n-left x oncoming straight");
 });
 
-test("signal controls on an arm stack left, then right, then straight, nearest the junction first", () => {
-  // Southern arm of j_1_0 (S1 gate): northbound approach, so "nearer the junction" means smaller y
+test("signal controls on an arm sit head-on: left and right side by side nearest the junction, straight centred below", () => {
+  // Southern arm of j_1_0 (S1 gate): northbound approach, so "nearer the junction" means smaller y and
+  // the driver's left is smaller x
   const controls = computeSignalControls(level).filter((c) => c.junctionId === "j_1_0" && c.direction === "Northbound");
   const by = (turn) => controls.find((c) => c.turns.length === 1 && c.turns[0] === turn);
   const [left, right, straight] = ["left", "right", "straight"].map(by);
   assert.ok(left && right && straight, "three controls on the arm");
-  assert.ok(left.y < right.y && right.y < straight.y, `order top to bottom: left ${left.y}, right ${right.y}, straight ${straight.y}`);
+  assert.equal(left.y, right.y, "turn controls share a row");
+  assert.ok(left.x < right.x, `left is on the driver's left: ${left.x} vs ${right.x}`);
+  assert.ok(straight.y > left.y, "straight is below the turn row");
+  assert.ok(Math.abs(straight.x - (left.x + right.x) / 2) < 1e-6, "straight is centred under the pair");
 });

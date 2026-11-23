@@ -5,7 +5,7 @@ const HIGH_MULTIPLIER = 3; // exits paid at or above this get the highlight colo
 const MAX_POPUPS = 6;
 
 // The reward event, shown where the eye already is: top centre of the screen, under the
-// congestion panel, not out on the map. Each exit pops "+points ×multiplier  $cash" and the text
+// congestion panel, not out on the map. Each exit pops "+$cash" (the multiplier has its own panel) and the text
 // grows to 200% while it fades (CSS). Reads the VEHICLE_COMPLETED event only; writes nothing.
 export class ExitPopups {
   constructor(parent, session) {
@@ -22,7 +22,7 @@ export class ExitPopups {
     const n = el("div", "hud-pop");
     n.dataset.tier = r.multiplier >= HIGH_MULTIPLIER ? "high" : "base";
     n.style.setProperty("--slot", String(this.count++ % 3));
-    n.append(el("b", "", `+${Math.round(r.points)}`), el("i", "", `×${r.multiplier.toFixed(1)}`), el("span", "", `$${Math.round(r.cash)}`));
+    n.append(el("b", "", `+$${Math.round(r.cash)}`));
     n.addEventListener("animationend", () => n.remove());
     this.root.append(n);
   }
