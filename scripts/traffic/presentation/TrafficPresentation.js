@@ -9,6 +9,8 @@ import { TrafficEvents } from "../TrafficEvents.js";
 import { UI, Theme, world } from "../ui/theme.js";
 import { toCss } from "../ui/themes.js";
 
+const LANE_HALF = 10; // lanes are 20px apart, so a stop line spans exactly its own lane
+
 const _p = { x: 0, y: 0, angle: 0 };
 
 // Phaser-side view of a TrafficSession. Reads ECS state and draws it; owns no
@@ -36,13 +38,27 @@ export class TrafficPresentation {
     this.obstacleSystem = {}; // lists of added/removed entities are replaced on the system object, so read .entities
     this.obstacleSystem.entities = em.registerSystem(this.obstacleSystem, ["ObstacleComponent"]);
     this.vehicleSystem = session.vehicleSystem;
-    // Approach lane -> the signal group of the movement it feeds (a stop line shows that group's state)
+    // Approach lane -> the signal group of each movement it feeds. A stop line shows every group:
+    // one stripe when they agree on a group, otherwise split left / straight / right across the lane.
     this.stopLines = [];
+    const order = { left: 0, straight: 1, right: 2 };
     for (const e of this.lanes) {
       const c = e.components.LaneComponent;
       if (c.kind !== "connector") continue;
       const from = session.entity(c.fromId).getComponent("LaneComponent");
-      if (!this.stopLines.some((x) => x.lane === from)) this.stopLines.push({ lane: from, group: c.signalGroup.components.SignalGroupComponent });
+      let sl = this.stopLines.find((x) => x.lane === from);
+      if (!sl) this.stopLines.push((sl = { lane: from, parts: [] }));
+      sl.parts.push({ turn: c.turn ?? "straight", group: c.signalGroup.components.SignalGroupComponent });
+    }
+    for (const sl of this.stopLines) {
+      sl.parts.sort((a, b) => order[a.turn] - order[b.turn]);
+      const groups = new Set(sl.parts.map((p) => p.group));
+      if (groups.size === 1) sl.parts = [{ turn: "all", group: sl.parts[0].group }];
+      // Equal slices of the lane, left edge (-HALF) to right edge (+HALF)
+      sl.parts.forEach((p, i) => {
+        p.from = -LANE_HALF + (2 * LANE_HALF * i) / sl.parts.length;
+        p.to = -LANE_HALF + (2 * LANE_HALF * (i + 1)) / sl.parts.length;
+      });
     }
 
     this.drawStatic(session);
@@ -169,7 +185,7 @@ export class TrafficPresentation {
     }
     // Stop lines at the end of approach lanes (recoloured by syncLights)
     g.lineStyle(3, w.stopLine, 1);
-    for (const { lane } of this.stopLines) this.line(g, lane, lane.stopLineS, 17);
+    for (const { lane } of this.stopLines) this.line(g, lane, lane.stopLineS, LANE_HALF);
     // Gates: a disc where traffic enters, a bar where it leaves
     for (const e of this.inputGates) {
       for (const laneEntity of e.components.InputGateComponent.lanes) {
@@ -184,7 +200,7 @@ export class TrafficPresentation {
     g.lineStyle(5, w.outputGate, 1);
     for (const e of this.outputGates) {
       const lane = e.components.OutputGateComponent.lane.components.LaneComponent;
-      this.line(g, lane, lane.length - 3, 17);
+      this.line(g, lane, lane.length - 3, LANE_HALF);
     }
     g.lineStyle(0);
     for (const r of level.roads ?? []) if (r.name) this.roadName(r);
@@ -263,11 +279,16 @@ export class TrafficPresentation {
 
   // A line across a lane at path distance s, `half` px either side of the centre.
   line(g, lane, s, half) {
+    this.span(g, lane, s, -half, half);
+  }
+
+  // The part of that line between lateral offsets from..to (negative = left of travel).
+  span(g, lane, s, from, to) {
     pointAt(lane.path, s, _p);
-    const nx = -Math.sin(_p.angle) * half;
-    const ny = Math.cos(_p.angle) * half;
-    g.moveTo(_p.x - nx, _p.y - ny);
-    g.lineTo(_p.x + nx, _p.y + ny);
+    const nx = -Math.sin(_p.angle);
+    const ny = Math.cos(_p.angle);
+    g.moveTo(_p.x + nx * from, _p.y + ny * from);
+    g.lineTo(_p.x + nx * to, _p.y + ny * to);
   }
 
   // Stop-line stripes take the signal group's colour so each stream reads at a glance
@@ -279,17 +300,19 @@ export class TrafficPresentation {
     const g = this.lightGfx;
     g.clear();
     const w = world();
-    for (const { lane, group } of this.stopLines) {
-      const color = w.light[group.state];
-      if (w.lightGlow > 0) {
-        // Emissive: a wide soft stripe under the line reads as light on the road
-        g.lineStyle(14, color, w.lightGlow * 0.35);
-        this.line(g, lane, lane.stopLineS, 17);
-        g.lineStyle(9, color, w.lightGlow * 0.5);
-        this.line(g, lane, lane.stopLineS, 17);
+    for (const { lane, parts } of this.stopLines) {
+      for (const { group, from, to } of parts) {
+        const color = w.light[group.state];
+        if (w.lightGlow > 0) {
+          // Emissive: a wide soft stripe under the line reads as light on the road
+          g.lineStyle(14, color, w.lightGlow * 0.35);
+          this.span(g, lane, lane.stopLineS, from, to);
+          g.lineStyle(9, color, w.lightGlow * 0.5);
+          this.span(g, lane, lane.stopLineS, from, to);
+        }
+        g.lineStyle(5, color, 1);
+        this.span(g, lane, lane.stopLineS, from, to);
       }
-      g.lineStyle(5, color, 1);
-      this.line(g, lane, lane.stopLineS, 17);
     }
   }
 
