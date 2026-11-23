@@ -222,6 +222,7 @@ export function validateLevel(level, options = {}) {
     if (!isStr(o?.kind)) err(`${p}.kind`, "required string");
     if (!(o?.at >= 0)) err(`${p}.at`, "start time must be a number >= 0");
     if (!(o?.duration > 0)) err(`${p}.duration`, "must be > 0");
+    if (o?.position !== undefined && !(isNum(o.position) && o.position >= 0 && o.position <= 1)) err(`${p}.position`, "must be a fraction 0..1 along the lane (default 1, the far end)");
     if (!Array.isArray(o?.blockedLanes) || o.blockedLanes.length === 0) err(`${p}.blockedLanes`, "needs at least one lane or movement id");
     else o.blockedLanes.forEach((id, k) => {
       if (!laneById.has(id) && !movementById.has(id)) err(`${p}.blockedLanes[${k}]`, `unknown lane or movement "${id}"`);

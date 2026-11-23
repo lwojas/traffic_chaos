@@ -395,6 +395,20 @@ test("level-scheduled obstacles use the same machinery: roadworks block a lane, 
   assert.equal(lane(s, "lane_e_in_0").blockers.length, 0);
 });
 
+test("roadworks can sit mid-road: traffic queues behind them, away from the junction", () => {
+  const level = clone(level01);
+  level.obstacles = [{ id: "roadworks_mid", kind: "roadworks", at: 5, duration: 10, position: 0.5, blockedLanes: ["lane_e_in_0"] }];
+  const s = quietSession(level);
+  setGroups(s, ewS);
+  secs(s, 5.5);
+  const len = lane(s, "lane_e_in_0").length;
+  assert.ok(Math.abs(lane(s, "lane_e_in_0").blockers[0].rear - (len / 2 - 6)) < 0.01, "block sits midway along the lane");
+  const v = car(s, "e", "straight");
+  assert.ok(runUntil(s, () => vs(v).speed < 0.5, 12), "stopped by the roadworks");
+  assert.ok(vs(v).s < len / 2, "behind the block, well short of the junction");
+  assert.ok(runUntil(s, () => s.stats.completed === 1, 30), "completes after the roadworks end");
+});
+
 test("incidents can be switched off for a level", () => {
   const level = clone(level01);
   level.incidents = { enabled: false };

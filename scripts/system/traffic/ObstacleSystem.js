@@ -44,8 +44,9 @@ export class ObstacleSystem extends System {
       const blocks = def.blockedLanes.map((id) => {
         const lane = this.resolve(id);
         const lc = lane.getComponent("LaneComponent");
-        // Whole lane closed at its far end; a movement is closed at its start
-        return { lane, rear: lc.kind === "connector" ? 0 : Math.max(0, lc.length - BLOCK_LENGTH) };
+        // A lane is closed `position` of the way along it (default: its far end, at the junction); a movement at its start
+        const at = Math.min(1, Math.max(0, def.position ?? 1)) * lc.length;
+        return { lane, rear: lc.kind === "connector" ? 0 : Math.max(0, at - BLOCK_LENGTH) };
       });
       this.factory.createEntity({
         type: "obstacle",

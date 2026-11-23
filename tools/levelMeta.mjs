@@ -6,6 +6,8 @@ const ramp = (pts) => ({ shift: pts.map(([time, rate]) => ({ time, rate })) });
 // Per-gate authoring overrides, so a level's entry and exit capacity is explicit data:
 //   inputs:  { gateId: { queueCapacity, demandScale } }   how much each entry can hold and how hard it pushes
 //   outputs: { gateId: { outflowPerMinute } }             how fast each exit discharges (a downstream bottleneck)
+// Tow pricing scales with each map's income: the first tow costs about 45 s of good-play income (costStep about half
+// that) and start cash covers two. Measured with tools/playtest.mjs (fixed-8 bot, cash / run time); retune from playtests.
 export const META = {
   first_junction: {
     name: "Mill Town",
@@ -16,11 +18,13 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 4000 }, gold: { time: 720, score: 7000, maxIncidents: 3 } },
     gridlock: { fullSeconds: 6 },
     incidents: { duration: 14 },
-    // Roadworks close a link for a while: the streams behind it stall, so the player must re-prioritise mid-shift
+    economy: { startCash: 150 },
+    interventions: { tow: { cost: 70, costStep: 35 } },
+    // Roadworks close a link for a while (position 0.5 = midway between the junctions): the streams behind it stall, so the player must re-prioritise mid-shift
     obstacles: [
-      { id: "roadworks_a", kind: "roadworks", at: 150, duration: 30, blockedLanes: ["link_j_0_0_j_0_1"] },
-      { id: "roadworks_b", kind: "roadworks", at: 330, duration: 35, blockedLanes: ["link_j_1_0_j_1_1"] },
-      { id: "roadworks_c", kind: "roadworks", at: 520, duration: 40, blockedLanes: ["link_j_0_1_j_1_1"] },
+      { id: "roadworks_a", kind: "roadworks", position: 0.5, at: 150, duration: 30, blockedLanes: ["link_j_0_0_j_0_1"] },
+      { id: "roadworks_b", kind: "roadworks", position: 0.5, at: 330, duration: 35, blockedLanes: ["link_j_1_0_j_1_1"] },
+      { id: "roadworks_c", kind: "roadworks", position: 0.5, at: 520, duration: 40, blockedLanes: ["link_j_0_1_j_1_1"] },
     ],
     inputs: { input_w1: { queueCapacity: 14 }, input_n2: { queueCapacity: 8 }, input_w2: { queueCapacity: 12 }, input_e2: { queueCapacity: 8 } },
     // Playtest bots only (not written to the level): one phase per entry; the merges are at j_0_1 and j_1_1, E2 turns left into the exit
@@ -35,6 +39,8 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 5500 }, gold: { time: 720, score: 9500, maxIncidents: 2 } },
     gridlock: { fullSeconds: 9 },
     incidents: { duration: 15 },
+    economy: { startCash: 210 },
+    interventions: { tow: { cost: 105, costStep: 50 } },
     inputs: { input_w1: { queueCapacity: 12 }, input_n1: { queueCapacity: 8 }, input_n3: { queueCapacity: 8 } },
     outputs: { output_s1: { outflowPerMinute: 18 }, output_s2: { outflowPerMinute: 18 }, output_s3: { outflowPerMinute: 18 } },
   },
@@ -47,6 +53,8 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 5500 }, gold: { time: 720, score: 10000, maxIncidents: 3 } },
     gridlock: { fullSeconds: 9 },
     incidents: { duration: 15 },
+    economy: { startCash: 220 },
+    interventions: { tow: { cost: 110, costStep: 55 } },
     inputs: { input_w1: { queueCapacity: 12 }, input_w2: { queueCapacity: 12 }, input_n1: { queueCapacity: 8 }, input_n3: { queueCapacity: 8 } },
     outputs: { output_s1: { outflowPerMinute: 18 }, output_s2: { outflowPerMinute: 18 }, output_s3: { outflowPerMinute: 18 } },
   },
@@ -59,6 +67,8 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 6000 }, gold: { time: 720, score: 11000, maxIncidents: 4 } },
     gridlock: { fullSeconds: 9 },
     incidents: { duration: 15 },
+    economy: { startCash: 260 },
+    interventions: { tow: { cost: 130, costStep: 65 } },
     inputs: { input_w1: { queueCapacity: 12 }, input_w2: { queueCapacity: 12 }, input_n1: { queueCapacity: 8 }, input_n2: { queueCapacity: 8 }, input_n3: { queueCapacity: 8 } },
     outputs: { output_s1: { outflowPerMinute: 18 }, output_s2: { outflowPerMinute: 18 }, output_s3: { outflowPerMinute: 18 } },
   },
@@ -71,6 +81,8 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 9500 }, gold: { time: 720, score: 17000, maxIncidents: 3 } },
     gridlock: { fullSeconds: 8 },
     incidents: { duration: 16 },
+    economy: { startCash: 520 },
+    interventions: { tow: { cost: 260, costStep: 130 } },
   },
   network_03: {
     name: "Connected Junctions",
@@ -81,6 +93,8 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 14000 }, gold: { time: 720, score: 24000, maxIncidents: 3 } },
     gridlock: { fullSeconds: 8 },
     incidents: { duration: 16 },
+    economy: { startCash: 600 },
+    interventions: { tow: { cost: 300, costStep: 150 } },
   },
   network_02: {
     name: "City Grid",
@@ -91,6 +105,8 @@ export const META = {
         ratings: { bronze: { time: 360 }, silver: { time: 540, score: 25000 }, gold: { time: 900, score: 45000, maxIncidents: 4 } },
     gridlock: { fullSeconds: 8 },
     incidents: { duration: 16 },
+    economy: { startCash: 1050 },
+    interventions: { tow: { cost: 530, costStep: 260 } },
   },
 };
 

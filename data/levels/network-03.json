@@ -1092,5 +1092,14 @@
       "score": 24000,
       "maxIncidents": 3
     }
+  },
+  "economy": {
+    "startCash": 600
+  },
+  "interventions": {
+    "tow": {
+      "cost": 300,
+      "costStep": 150
+    }
   }
 }

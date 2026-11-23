@@ -1374,6 +1374,7 @@
     {
       "id": "roadworks_a",
       "kind": "roadworks",
+      "position": 0.5,
       "at": 150,
       "duration": 30,
       "blockedLanes": [
@@ -1383,6 +1384,7 @@
     {
       "id": "roadworks_b",
       "kind": "roadworks",
+      "position": 0.5,
       "at": 330,
       "duration": 35,
       "blockedLanes": [
@@ -1392,6 +1394,7 @@
     {
       "id": "roadworks_c",
       "kind": "roadworks",
+      "position": 0.5,
       "at": 520,
       "duration": 40,
       "blockedLanes": [
@@ -1790,6 +1793,15 @@
       "time": 720,
       "score": 7000,
       "maxIncidents": 3
+    }
+  },
+  "economy": {
+    "startCash": 150
+  },
+  "interventions": {
+    "tow": {
+      "cost": 70,
+      "costStep": 35
     }
   }
 }
