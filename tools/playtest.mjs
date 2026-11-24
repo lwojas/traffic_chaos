@@ -2,7 +2,7 @@
 // Plays a level with several bot strategies and prints how each run ended.
 import { networkBalance } from "../scripts/traffic/util/networkBalance.js";
 import { META } from "./levelMeta.mjs";
-import { play, makeBot, withTow, loadLevel } from "./botPlayers.mjs";
+import { play, makeBot, withTow, withDivert, loadLevel } from "./botPlayers.mjs";
 
 const file = process.argv[2] ?? "first-junction.json";
 const seeds = Number(process.argv[3] ?? 4);
@@ -24,6 +24,8 @@ const bots = {
   charger: () => makeBot("charger", phases),
   "charger+tow": () => withTow(makeBot("charger", phases)),
   "reckless+tow": () => withTow(makeBot("reckless", phases)),
+  "charger+div": () => withDivert(makeBot("charger", phases)),
+  "charger+tow+div": () => withDivert(withTow(makeBot("charger", phases))),
 };
 const mm = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 const nb = networkBalance(level);
@@ -34,5 +36,5 @@ for (const [name, make] of Object.entries(bots)) {
   for (let seed = 1; seed <= seeds; seed++) rows.push(play(level, make(), { seed }));
   const avg = (k) => rows.reduce((a, r) => a + r[k], 0) / rows.length;
   const times = rows.map((r) => mm(r.time) + (r.status === "complete" ? "✓" : "")).join(" ");
-  console.log(`${name.padEnd(13)} ends ${times.padEnd(28)} score ${avg("score").toFixed(0).padStart(5)}  cash ${avg("earned").toFixed(0).padStart(5)}  exits ${avg("throughput").toFixed(0).padStart(3)}  incidents ${avg("incidents").toFixed(1).padStart(4)}  multiplier avg x${avg("avgMultiplier").toFixed(1)} peak x${avg("peakMultiplier").toFixed(1)}`);
+  console.log(`${name.padEnd(16)} ends ${times.padEnd(28)} score ${avg("score").toFixed(0).padStart(5)}  cash ${avg("earned").toFixed(0).padStart(5)}  exits ${avg("throughput").toFixed(0).padStart(3)}  incidents ${avg("incidents").toFixed(1).padStart(4)}  diversions ${avg("diversionsUsed").toFixed(1).padStart(4)}  multiplier avg x${avg("avgMultiplier").toFixed(1)} peak x${avg("peakMultiplier").toFixed(1)}`);
 }

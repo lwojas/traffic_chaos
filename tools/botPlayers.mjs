@@ -1,6 +1,6 @@
 // Headless "players" for pacing and balance checks. A bot only does what a
 // human can: it reads stream state (queue, pressure) and issues signal / tow
-// commands through the session. Phases are lists of signal groups opened
+// / diversion commands through the session. Phases are lists of signal groups opened
 // together; the bot opens one phase at a time with an all-red gap between
 // phases, so an exclusive bot never causes incidents by itself.
 import { readFileSync } from "node:fs";
@@ -78,6 +78,18 @@ export function withTow(bot, after = 2) {
     for (const e of s.interventions.obstacleHelper.entities) {
       const o = e.getComponent("ObstacleComponent");
       if (o.active && !o.towed && s.time - o.createdAt >= after && !s.interventions.refusal("tow", e.id)) s.intervene("tow", e.id);
+    }
+  };
+}
+
+// Signs traffic round any incident that has been active for `after` seconds, when a
+// diversion is free (the free "route round it" move; lifts itself when it clears).
+export function withDivert(bot, after = 2) {
+  return (s) => {
+    bot(s);
+    for (const e of s.diversions.obstacles.entities) {
+      const o = e.getComponent("ObstacleComponent");
+      if (o.active && !o.towed && s.time - o.createdAt >= after && !s.diversions.isDiverted(e.id) && !s.diversions.refusal(`incident:${e.id}`)) s.divertAround(e.id);
     }
   };
 }

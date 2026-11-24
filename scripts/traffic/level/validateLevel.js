@@ -251,12 +251,14 @@ export function validateLevel(level, options = {}) {
   optNum("gridlock.fullSeconds", level.gridlock?.fullSeconds);
   optNum("incidents.duration", level.incidents?.duration, 0.001);
   optNum("scoring.perVehicle", level.scoring?.perVehicle);
-  for (const key of ["economy", "multiplier", "pressure", "interventions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
+  for (const key of ["economy", "multiplier", "pressure", "interventions", "diversions", "goal", "ratings", "progression"]) if (level[key] !== undefined && !isObject(level[key])) err(key, "must be an object");
   optNum("economy.cashPerVehicle", level.economy?.cashPerVehicle);
   optNum("economy.startCash", level.economy?.startCash);
   for (const key of ["min", "max", "calm", "jam", "riseGain", "fallGain", "fallSeconds"]) optNum(`multiplier.${key}`, level.multiplier?.[key]);
   if (level.pressure?.riskBands !== undefined && !(Array.isArray(level.pressure.riskBands) && level.pressure.riskBands.every(isNum))) err("pressure.riskBands", "must be an array of numbers");
   if (isObject(level.interventions)) for (const [id, cfg] of Object.entries(level.interventions)) for (const [k, v] of Object.entries(cfg ?? {})) optNum(`interventions.${id}.${k}`, v);
+  optNum("diversions.slots", level.diversions?.slots);
+  optNum("diversions.cooldown", level.diversions?.cooldown);
   optNum("goal.surviveSeconds", level.goal?.surviveSeconds, 1);
   if (isObject(level.ratings))
     for (const [medal, req] of Object.entries(level.ratings)) {

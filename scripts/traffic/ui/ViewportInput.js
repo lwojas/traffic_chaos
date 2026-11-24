@@ -4,18 +4,22 @@ import { edgeScrollVelocity } from "../view/edgeScroll.js";
 const PAN_KEYS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 const _v = { x: 0, y: 0 };
 const _w = { x: 0, y: 0 };
+const HOLD_SECONDS = 0.45; // press-and-hold on a world control: its second action (divert)
 
 // Routes pointer and key input over the game viewport. Priority, highest first:
 //   1. HUD: DOM panels sit above the canvas and swallow their own events, so
 //      anything whose target is not the canvas never reaches this class.
 //   2. World UI: a press that lands on a world control belongs to that control
-//      (it activates on release over the same control and never pans).
+//      (it activates on release over the same control and never pans). Held
+//      for HOLD_SECONDS, or a right-click, it fires the control's hold action
+//      instead, and the release then does nothing.
 //   3. Camera: a press on empty world drags the map; the pointer near a viewport
 //      edge scrolls it; arrow keys pan.
 //
 // Works in screen coordinates and converts through the ViewCamera, so it has no
 // idea what the world contains. `worldUi` is anything with pick(wx, wy) ->
-// control | null, setHover(control), activate(control).
+// control | null, setHover(control), activate(control), and optionally
+// hold(control) and setHold(control | null, progress 0..1).
 export class ViewportInput {
   constructor({ element, canvas, options = {} }) {
     this.element = element; // the game viewport
@@ -39,6 +43,10 @@ export class ViewportInput {
     this.on(document.documentElement, "mouseleave", () => this.leave());
     this.on(window, "keydown", (e) => this.onKey(e, true));
     this.on(window, "keyup", (e) => this.onKey(e, false));
+    // Right-click is the hold shortcut on a control, so the browser menu stays off the canvas
+    this.on(window, "contextmenu", (e) => {
+      if (e.target === this.canvas()) e.preventDefault();
+    });
   }
 
   // Attach to a new level's camera and world controls.
@@ -82,12 +90,16 @@ export class ViewportInput {
 
   onDown(e) {
     const cam = this.camera;
-    if (!cam || e.button !== 0 || e.target !== this.canvas()) return;
+    if (!cam || (e.button !== 0 && e.button !== 2) || e.target !== this.canvas()) return;
     const p = this.toViewport(e, this.pointer);
     p.seen = p.inside = p.overWorld = true;
     cam.screenToWorld(p.x, p.y, _w);
     const control = this.worldUi?.pick(_w.x, _w.y) ?? null;
-    if (control) this.gesture = { type: "press", control };
+    if (e.button === 2) {
+      if (control) this.worldUi.hold?.(control);
+      return;
+    }
+    if (control) this.gesture = { type: "press", control, held: 0, fired: false };
     else this.gesture = { type: "maybe-drag", sx: p.x, sy: p.y, camX: cam.x, camY: cam.y };
     try {
       e.target.setPointerCapture(e.pointerId);
@@ -98,7 +110,8 @@ export class ViewportInput {
   onUp(e) {
     const g = this.gesture;
     this.gesture = null;
-    if (g?.type === "press" && this.camera) {
+    this.worldUi?.setHold?.(null, 0);
+    if (g?.type === "press" && !g.fired && this.camera) {
       const p = this.toViewport(e, this.pointer);
       this.camera.screenToWorld(p.x, p.y, _w);
       if (this.worldUi?.pick(_w.x, _w.y) === g.control) this.worldUi.activate(g.control);
@@ -123,6 +136,7 @@ export class ViewportInput {
 
   cancel() {
     this.gesture = null;
+    this.worldUi?.setHold?.(null, 0);
     this.keys.clear();
     this.pointer.inside = this.pointer.overWorld = false;
     this.updateHover();
@@ -148,6 +162,7 @@ export class ViewportInput {
   update(dt) {
     const cam = this.camera;
     if (!cam) return;
+    this.updateHold(dt);
     let vx = 0;
     let vy = 0;
     for (const k of this.keys) {
@@ -165,6 +180,23 @@ export class ViewportInput {
       this.updateHover(); // the world moved under a stationary pointer
     }
     cam.update(dt);
+  }
+
+  // A press held on its control fills up, then fires the hold action once. Moving
+  // off the control drains it; coming back resumes.
+  updateHold(dt) {
+    const g = this.gesture;
+    const ui = this.worldUi;
+    if (g?.type !== "press" || g.fired || !ui?.hold) return;
+    const p = this.pointer;
+    this.camera.screenToWorld(p.x, p.y, _w);
+    g.held = ui.pick(_w.x, _w.y) === g.control ? g.held + dt : 0;
+    const progress = g.held / HOLD_SECONDS;
+    if (progress >= 1) {
+      g.fired = true;
+      ui.setHold?.(null, 0);
+      ui.hold(g.control);
+    } else ui.setHold?.(progress > 0.15 ? g.control : null, progress); // a quick tap shows nothing
   }
 
   destroy() {

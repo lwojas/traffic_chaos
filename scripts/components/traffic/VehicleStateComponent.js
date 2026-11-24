@@ -14,7 +14,10 @@ export const VehicleStates = {
 export class VehicleStateComponent {
   constructor(entity, data) {
     this.entity = entity;
-    this.route = data.route; // route entity
+    this.route = data.route; // authored route entity (where the vehicle was sent)
+    // The path actually driven: the route's steps, or a detour the DiversionSystem
+    // wrote. Shared arrays: replaced, never mutated in place.
+    this.steps = data.steps ?? data.route.components.RouteComponent.steps;
     this.routeIndex = data.routeIndex ?? 0;
     this.segment = data.segment; // current lane/connector entity
     this.s = data.s ?? 0;

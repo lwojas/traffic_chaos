@@ -162,13 +162,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hud-menu-note { font: 500 11px / 1.4 var(--theme-font-body); color: var(--theme-text-secondary); }
 
 /* ---- Incidents + tow (appears only while a crash is active) ---- */
-.hud-tow { width: 300px; border-color: var(--theme-hazard); box-shadow: var(--theme-panel-shadow), 0 0 0 1px var(--theme-hazard); }
+.hud-tow { width: 360px; border-color: var(--theme-hazard); box-shadow: var(--theme-panel-shadow), 0 0 0 1px var(--theme-hazard); }
 .hud-tow[hidden] { display: none; }
 .hud-tow-head { color: var(--theme-hazard); }
 .hud-tow-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-.hud-tow-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font: 600 12px var(--theme-font-body); color: var(--theme-text-secondary); }
+.hud-tow-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; font: 600 12px var(--theme-font-body); color: var(--theme-text-secondary); }
 .hud-tow-row .hud-button { padding: 4px 9px; }
 .hud-tow-go { background: var(--theme-hazard); border-color: var(--theme-hazard); color: var(--theme-text-on-accent); }
+.hud-tow-divert.is-active { border-color: var(--theme-hazard); color: var(--theme-hazard); }
 .hud-tow-go:hover { background: var(--theme-hazard); filter: brightness(1.1); }
 
 /* ---- Hint card (bottom-left) ---- */

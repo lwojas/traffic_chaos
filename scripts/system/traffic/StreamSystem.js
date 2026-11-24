@@ -85,7 +85,7 @@ export class StreamSystem extends System {
     for (let k = 0; k < list.length; k++) {
       const vs = list[k].components.VehicleStateComponent;
       if (vs.speed >= QUEUE_SPEED) break;
-      const next = vs.route.components.RouteComponent.steps[vs.routeIndex + 1];
+      const next = vs.steps[vs.routeIndex + 1];
       if (next && next.components.LaneComponent.signalGroup === s.groupEntity) q.push(list[k]);
     }
     s.queue = q.length;

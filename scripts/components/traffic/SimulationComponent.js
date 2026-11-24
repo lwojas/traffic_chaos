@@ -27,6 +27,7 @@ export class SimulationComponent {
     this.multiplier = data.multiplier; // { min, max, calm, jam, riseSeconds, fallSeconds }: congestion -> multiplier
     this.pressure = data.pressure; // { riskBands }: how full a stream's holding space must be for each risk band
     this.interventions = data.interventions; // { tow: { cost, costStep, cooldown, delay } }
+    this.diversions = data.diversions ?? { slots: 0, cooldown: 0 }; // { slots, cooldown }: movements the player can close at once
     this.goal = data.goal ?? null; // { surviveSeconds }: reaching it completes the level
     this.scheduledObstacles = data.scheduledObstacles ?? []; // level events, not yet fired
   }

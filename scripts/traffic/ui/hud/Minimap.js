@@ -7,7 +7,7 @@ const _r = { x: 0, y: 0, w: 0, h: 0 };
 
 // Tactical overview card: "NETWORK MAP" with a live dot, and the map in a recessed well.
 // Navigation overview. Draws from level topology (roads, junctions, gates) and a
-// few runtime markers (gate queue pressure, incidents), plus the camera's view
+// few runtime markers (gate queue pressure, incidents, diversions), plus the camera's view
 // rectangle. It never renders the game world and owns no simulation logic.
 // Pressing or dragging on it re-centres the camera: it is just another camera control.
 export class Minimap {
@@ -213,6 +213,18 @@ export class Minimap {
         c.beginPath();
         c.arc(_p.x, _p.y, 3, 0, Math.PI * 2);
         c.stroke();
+      }
+      // Diversions: a small striped barrier at each closed movement's stop line
+      for (const s of m.streams) {
+        if (!s.diverted) continue;
+        tf.worldToMap(s.x, s.y, _p);
+        c.shadowColor = "transparent";
+        c.fillStyle = "#ffffff";
+        c.fillRect(_p.x - 5, _p.y - 2.5, 10, 5);
+        c.fillStyle = t.incident;
+        c.fillRect(_p.x - 5, _p.y - 2.5, 2.5, 5);
+        c.fillRect(_p.x - 1.25, _p.y - 2.5, 2.5, 5);
+        c.fillRect(_p.x + 2.5, _p.y - 2.5, 2.5, 5);
       }
       // Incidents: a pulsing cross with a ring, always on top
       for (const i of m.incidents) {

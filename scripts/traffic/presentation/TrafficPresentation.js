@@ -83,9 +83,11 @@ export class TrafficPresentation {
       level: session.level,
       groups: new Map(this.groups.map((e) => [e.id, e.components.SignalGroupComponent])),
       streams: session.streams,
+      diversions: session.diversions,
       layer: spriteLayers.fg5,
       onToggle: (groupId) => actions.toggleSignal(groupId),
-      isPending: (groupId) => actions.isSignalPending(groupId),
+      onDivert: (streamId) => actions.toggleDiversion(streamId),
+      isPending: (groupId, streamId) => actions.isSignalPending(groupId) || actions.isDiversionPending(streamId),
     });
 
     this.towDelay = session.sim.interventions.tow?.delay ?? 3;

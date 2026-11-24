@@ -11,8 +11,9 @@ const _p = { x: 0, y: 0, angle: 0 };
 // start of the gate's lane has room. This is the only way traffic enters, so a
 // congested lane backs up into the queue, and a full queue is the failure signal.
 export class VehicleSpawnSystem extends System {
-  constructor() {
+  constructor(diversions = null) {
     super();
+    this.diversions = diversions; // the path a car drives depends on the diversions in place when it enters
     this.entities = this.entityManager.registerSystem(this, ["InputGateComponent"]);
     this.sim = ServiceLocator.resolve("game", "TrafficSimulation");
     this.events = ServiceLocator.resolve("game", "EventSystem");
@@ -24,8 +25,9 @@ export class VehicleSpawnSystem extends System {
       const gate = this.entities[i].getComponent("InputGateComponent");
       if (gate.queue.length === 0) continue;
       const head = gate.queue[0];
-      const lane = head.route.components.RouteComponent.steps[0]; // the queue is FIFO: a blocked head holds up the rest
-      if (this.entranceClear(lane.components.LaneComponent, head.type)) this.inject(gate, lane, gate.queue.shift());
+      const steps = this.diversions ? this.diversions.stepsFor(head.route, gate) : head.route.components.RouteComponent.steps;
+      const lane = steps[0]; // the queue is FIFO: a blocked head holds up the rest
+      if (this.entranceClear(lane.components.LaneComponent, head.type)) this.inject(gate, lane, { ...gate.queue.shift(), steps });
     }
   }
 
@@ -39,7 +41,7 @@ export class VehicleSpawnSystem extends System {
     return rs.s - rc.length >= type.length + rc.minGap + 4;
   }
 
-  inject(gate, laneEntity, { type, route }) {
+  inject(gate, laneEntity, { type, route, steps }) {
     const sim = this.sim;
     const lane = laneEntity.getComponent("LaneComponent");
     const list = lane.vehicles;
@@ -54,7 +56,7 @@ export class VehicleSpawnSystem extends System {
       components: {
         Position: { x: _p.x, y: _p.y },
         VehicleComponent: type,
-        VehicleStateComponent: { route, segment: laneEntity, s: type.length, speed, spawnTime: sim.time },
+        VehicleStateComponent: { route, steps, segment: laneEntity, s: type.length, speed, spawnTime: sim.time },
       },
     });
     em.endBatch();

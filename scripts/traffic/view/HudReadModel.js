@@ -3,6 +3,7 @@ import { pointAt } from "../util/geometry.js";
 const _p = { x: 0, y: 0, angle: 0 };
 
 import { riskBand } from "../util/pressureMath.js";
+import { incidentTarget } from "../../system/traffic/DiversionSystem.js";
 
 // What the player-facing HUD and minimap show, read straight from the
 // simulation: the stats component for aggregates, ECS components for gates and
@@ -70,6 +71,7 @@ export class HudReadModel {
       congestion: this.readCongestion(streams),
       tow: s.interventions.describe("tow"),
       crew: s.interventions.describe("crew"),
+      diversions: s.diversions.describe(),
       gates,
       incidents: this.readIncidents(),
       result: sim.status === "running" ? null : this.session.summary(),
@@ -105,7 +107,7 @@ export class HudReadModel {
       const y = _p.y;
       const slot = s.lane.length / s.capacity;
       pointAt(s.lane.path, Math.max(0, s.lane.stopLineS - s.queue * slot), _p);
-      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked };
+      return { id: s.id, laneId: s.laneId, x, y, tx: _p.x, ty: _p.y, queue: s.queue, pressure: s.pressure, risk: s.risk, blocked: s.blocked, diverted: this.session.diversions.isClosed(s.id) };
     });
   }
 
@@ -127,7 +129,12 @@ export class HudReadModel {
         y = _p.y;
       } else continue;
       const fixer = o.kind === "collision" ? "tow" : "crew"; // crashes need the tow truck, roadworks the road crew
-      out.push({ id: o.levelId, kind: o.kind, x, y, remaining: Math.max(0, o.remaining), towed: o.towed, blocked: o.blocks.length, fix: fixer, fixRefusal: this.session.interventions.refusal(fixer, o.levelId) });
+      const d = this.session.diversions;
+      out.push({
+        id: o.levelId, kind: o.kind, x, y, remaining: Math.max(0, o.remaining), towed: o.towed, blocked: o.blocks.length,
+        fix: fixer, fixRefusal: this.session.interventions.refusal(fixer, o.levelId),
+        diverted: d.isDiverted(o.levelId), divertRefusal: d.refusal(incidentTarget(o.levelId)),
+      });
     }
     return out;
   }

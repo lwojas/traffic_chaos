@@ -5,6 +5,8 @@ import { icon } from "../icons.js";
 // truck, roadworks the road crew. Spending is a
 // decision, so every button shows what it costs and why it may be unavailable.
 // Clicking calls actions.tow(id); `T` tows the incident that blocks the most.
+// "Divert" is the free alternative: it uses a diversion to sign traffic round
+// the blocked road (actions.divertAround) until the incident clears.
 export class TowPanel {
   constructor(parent, actions, camera) {
     this.actions = actions;
@@ -46,11 +48,13 @@ export class TowPanel {
         look.title = "Move the camera here";
         look.addEventListener("click", () => this.camera.glideTo(r.x, r.y));
         const text = el("span", "hud-tow-text");
+        const divert = el("button", "hud-button hud-tow-divert");
+        divert.addEventListener("click", () => this.actions.divertAround(i.id));
         const button = el("button", "hud-button hud-tow-go");
         button.addEventListener("click", () => this.actions[i.fix](i.id)); // actions.tow for crashes, actions.crew for roadworks
-        row.append(look, text, button);
+        row.append(look, text, divert, button);
         this.list.append(row);
-        r = { row, button, text: new Cell(text), label: new Cell(button), x: 0, y: 0 };
+        r = { row, button, divert, divertLabel: new Cell(divert), text: new Cell(text), label: new Cell(button), x: 0, y: 0 };
         this.rows.set(i.id, r);
       }
       r.x = i.x;
@@ -61,6 +65,11 @@ export class TowPanel {
       r.label.set(i.towed ? (crash ? "Towing" : "Fixing") : `${crash ? "Tow" : "Fix"} $${d.cost}`);
       r.button.disabled = !!i.fixRefusal;
       r.button.title = i.fixRefusal ?? (crash ? `Spend $${d.cost} to clear this crash in ${d.delay}s` : `Spend $${d.cost} to send the road crew: fixed in ${d.delay}s`);
+      const dv = m.diversions;
+      r.divertLabel.set(i.diverted ? "Diverted" : "Divert");
+      r.divert.classList.toggle("is-active", i.diverted);
+      r.divert.disabled = !!i.divertRefusal;
+      r.divert.title = i.divertRefusal ?? (i.diverted ? "Lift the diversion" : `Free: sign traffic round this until it clears (${dv.free} of ${dv.slots} diversions free)`);
     }
     for (const [id, r] of this.rows) {
       if (seen.has(id)) continue;

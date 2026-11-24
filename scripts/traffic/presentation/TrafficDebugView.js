@@ -197,7 +197,7 @@ export class TrafficDebugView {
       const p = v.components.Position;
       if (!this.camera.isVisible(p.x, p.y, 40)) continue;
       const vs = v.components.VehicleStateComponent;
-      const steps = vs.route.components.RouteComponent.steps;
+      const steps = vs.steps;
       const move = steps[1].id.replace("mv_", "");
       ctx.fillText(`${move} ${STATE_NAMES[vs.state][0]}`, p.x + 12, p.y - 10);
     }
@@ -205,7 +205,7 @@ export class TrafficDebugView {
 
   drawRoute(ctx, vehicle) {
     const vs = vehicle.components.VehicleStateComponent;
-    const steps = vs.route.components.RouteComponent.steps;
+    const steps = vs.steps;
     for (let i = vs.routeIndex; i < steps.length; i++) this.poly(ctx, steps[i].components.LaneComponent.points, "#ffffff", 3);
     const pos = vehicle.components.Position;
     ctx.strokeStyle = "#ffffff";

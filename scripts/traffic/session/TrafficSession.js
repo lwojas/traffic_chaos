@@ -19,6 +19,7 @@ import { StreamSystem } from "../../system/traffic/StreamSystem.js";
 import { MultiplierSystem } from "../../system/traffic/MultiplierSystem.js";
 import { InterventionSystem } from "../../system/traffic/InterventionSystem.js";
 import { ShiftSystem } from "../../system/traffic/ShiftSystem.js";
+import { DiversionSystem, incidentTarget } from "../../system/traffic/DiversionSystem.js";
 
 const MAX_STEPS_PER_FRAME = 8;
 
@@ -72,6 +73,7 @@ export class TrafficSession {
           multiplier: { ...rules.multiplier, ...level.multiplier },
           pressure: { ...rules.pressure, ...level.pressure },
           interventions: mergeInterventions(rules.interventions, level.interventions),
+          diversions: { slots: 0, cooldown: 0, ...rules.diversions, ...level.diversions },
           goal: level.goal,
           scheduledObstacles: structuredClone(level.obstacles ?? []).sort((a, b) => a.at - b.at),
         },
@@ -89,6 +91,7 @@ export class TrafficSession {
     //   2 spawn       queue heads enter the network if their lane has room
     //   3 signals     player commands -> signal group states
     //   4 interventions  player spends cash (tow truck): edits obstacle timers
+    //   4b diversions player closes a movement: uncommitted paths are rewritten round it
     //   5-6 vehicles  approach, stop-line decisions, movement along paths
     //   7-8 conflicts two vehicles in one conflict zone -> incident + obstacle
     //   9 obstacles   activate, count down, clear (blocks act as stopped leaders)
@@ -101,11 +104,13 @@ export class TrafficSession {
     //  16 shift       surviving goal.surviveSeconds completes it
     // (presentation runs outside the simulation and only reads it.)
     this.vehicleSystem = new VehicleSystem();
+    this.diversions = new DiversionSystem();
     this.systems = [
       new TrafficDemandSystem(),
-      new VehicleSpawnSystem(),
+      new VehicleSpawnSystem(this.diversions),
       new TrafficSignalSystem(),
       (this.interventions = new InterventionSystem()),
+      this.diversions,
       this.vehicleSystem,
       new JunctionConflictSystem(),
       new ObstacleSystem(this.vehicleSystem, (id) => this.entities.get(id)),
@@ -172,6 +177,16 @@ export class TrafficSession {
     this.command({ type: "signal.toggle", group });
   }
 
+  // Player diversion: close a movement (a stream id, "groupId@laneId"), or reopen it.
+  toggleDiversion(target) {
+    this.command({ type: "diversion.toggle", target });
+  }
+
+  // Sign traffic round an incident (every movement into the road it blocks), or lift that.
+  divertAround(obstacleId) {
+    this.toggleDiversion(incidentTarget(obstacleId));
+  }
+
   setPaused(paused) {
     this.sim.paused = paused;
   }
@@ -205,6 +220,7 @@ export class TrafficSession {
       incidents: st.incidents,
       throughput: st.completed,
       towsUsed: st.towsUsed,
+      diversionsUsed: this.diversions.used,
       avgMultiplier: st.avgMultiplier,
       peakMultiplier: st.peakMultiplier,
     };

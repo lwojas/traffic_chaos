@@ -21,7 +21,8 @@ function arrowPoints(turn) {
 // from the active theme's tokens (themes.js): the light colours, the dial face and
 // rim, the glow strength. Interaction code does not change when a theme does.
 //   view = { x, y, heading, turns, state (LightState), hovered, pending,
-//            pressure (0..1), risk (0..3), blocked, time (s), flash (0..1) }
+//            pressure (0..1), risk (0..3), blocked, time (s), flash (0..1),
+//            closed (diverted), hold (0..1 press-and-hold progress) }
 // The dial is the signal head: rim and glyph take the light's colour (a red
 // light also carries a stop mark, so state is never colour alone); the ring
 // around it is how full the holding space is, in the congestion colour.
@@ -75,7 +76,7 @@ export function drawSignalControl(g, view, style = UI.signalControl) {
   const sin = Math.sin(view.heading);
   const d = r * 2;
   const at = ([lx, ly]) => [cx + (lx * cos - ly * sin) * d, cy + (lx * sin + ly * cos) * d];
-  const glyphAlpha = view.state === 0 ? 0.75 : 1;
+  const glyphAlpha = view.closed ? 0.35 : view.state === 0 ? 0.75 : 1;
   for (const turn of view.turns) {
     const pts = arrowPoints(turn).map(at);
     g.lineStyle(4, light, glyphAlpha);
@@ -120,6 +121,33 @@ export function drawSignalControl(g, view, style = UI.signalControl) {
     g.lineTo(bx, by + 0.5);
     g.moveTo(bx, by + 3);
     g.lineTo(bx, by + 3.2);
+  }
+
+  // Diverted: a striped road barrier across the dial (the movement is closed)
+  if (view.closed) {
+    const bw = r * 2.5;
+    const bh = r * 0.8;
+    const x0 = cx - bw / 2;
+    const y0 = cy - bh / 2;
+    const stripes = 5;
+    g.lineStyle(0);
+    g.beginFill(0xffffff, 1);
+    g.drawRect(x0, y0, bw, bh);
+    g.endFill();
+    g.beginFill(w.hazard, 1);
+    for (let i = 0; i < stripes; i += 2) {
+      const a = x0 + (bw * i) / stripes;
+      const b = x0 + (bw * (i + 1)) / stripes;
+      g.drawPolygon([a + bh * 0.3, y0, b + bh * 0.3, y0, b - bh * 0.3, y0 + bh, a - bh * 0.3, y0 + bh]);
+    }
+    g.endFill();
+    g.lineStyle(2, sig.face, 1);
+    g.drawRect(x0, y0, bw, bh);
+  }
+  // Press-and-hold progress (hold to divert / reopen)
+  if (view.hold > 0) {
+    g.lineStyle(4, sig.hover, 1);
+    g.arc(cx, cy, R + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, view.hold), false, 32);
   }
 
   // Danger pulse: the worse the risk, the faster and wider the ring

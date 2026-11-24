@@ -57,7 +57,7 @@ export class VehicleSystem extends System {
       vs.stillTime += dt;
       return;
     }
-    const steps = vs.route.components.RouteComponent.steps;
+    const steps = vs.steps;
     const next = steps[vs.routeIndex + 1];
     const nextLane = next ? next.components.LaneComponent : null;
     const v = vs.speed;
@@ -214,7 +214,7 @@ export class VehicleSystem extends System {
   advanceSegment(entity) {
     const vs = entity.components.VehicleStateComponent;
     const lane = vs.segment.components.LaneComponent;
-    const steps = vs.route.components.RouteComponent.steps;
+    const steps = vs.steps;
     const list = lane.vehicles;
     const at = list.indexOf(entity);
     if (at >= 0) list.splice(at, 1);

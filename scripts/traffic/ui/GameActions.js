@@ -71,6 +71,24 @@ export class GameActions {
     return false;
   }
 
+  // Close a movement and sign its traffic round it, or reopen it (press and hold on a world control).
+  toggleDiversion(streamId) {
+    const s = this.session;
+    if (s && !s.gameOver) s.toggleDiversion(streamId);
+  }
+
+  // Sign traffic round an incident (incident panel), or lift that diversion.
+  divertAround(obstacleId) {
+    const s = this.session;
+    if (s && !s.gameOver) s.divertAround(obstacleId);
+  }
+
+  isDiversionPending(target) {
+    const cmds = this.session?.sim.commands ?? [];
+    for (let i = 0; i < cmds.length; i++) if (cmds[i].target === target) return true;
+    return false;
+  }
+
   // Spend cash on an intervention. The simulation re-checks it at the next tick.
   tow(obstacleId) {
     const s = this.session;
