@@ -7,7 +7,7 @@ const ramp = (pts) => ({ shift: pts.map(([time, rate]) => ({ time, rate })) });
 //   inputs:  { gateId: { queueCapacity, demandScale } }   how much each entry can hold and how hard it pushes
 //   outputs: { gateId: { outflowPerMinute } }             how fast each exit discharges (a downstream bottleneck)
 // Tow pricing scales with each map's income: the first tow costs about 45 s of good-play income (costStep about half
-// that) and start cash covers two. Measured with tools/playtest.mjs (fixed-8 bot, cash / run time); retune from playtests.
+// that) and start cash covers two. The road crew (roadworks last 2-3x longer than a crash) costs 1.5x a tow. Measured with tools/playtest.mjs (fixed-8 bot, cash / run time); retune from playtests.
 export const META = {
   first_junction: {
     name: "Mill Town",
@@ -19,7 +19,7 @@ export const META = {
     gridlock: { fullSeconds: 6 },
     incidents: { duration: 14 },
     economy: { startCash: 150 },
-    interventions: { tow: { cost: 70, costStep: 35 } },
+    interventions: { tow: { cost: 70, costStep: 35 }, crew: { cost: 105, costStep: 35 } },
     // Roadworks close a link for a while (position 0.5 = midway between the junctions): the streams behind it stall, so the player must re-prioritise mid-shift
     obstacles: [
       { id: "roadworks_a", kind: "roadworks", position: 0.5, at: 150, duration: 30, blockedLanes: ["link_j_0_0_j_0_1"] },
@@ -40,7 +40,7 @@ export const META = {
     gridlock: { fullSeconds: 9 },
     incidents: { duration: 15 },
     economy: { startCash: 210 },
-    interventions: { tow: { cost: 105, costStep: 50 } },
+    interventions: { tow: { cost: 105, costStep: 50 }, crew: { cost: 160, costStep: 50 } },
     inputs: { input_w1: { queueCapacity: 12 }, input_n1: { queueCapacity: 8 }, input_n3: { queueCapacity: 8 } },
     outputs: { output_s1: { outflowPerMinute: 18 }, output_s2: { outflowPerMinute: 18 }, output_s3: { outflowPerMinute: 18 } },
   },
@@ -54,7 +54,7 @@ export const META = {
     gridlock: { fullSeconds: 9 },
     incidents: { duration: 15 },
     economy: { startCash: 220 },
-    interventions: { tow: { cost: 110, costStep: 55 } },
+    interventions: { tow: { cost: 110, costStep: 55 }, crew: { cost: 165, costStep: 55 } },
     inputs: { input_w1: { queueCapacity: 12 }, input_w2: { queueCapacity: 12 }, input_n1: { queueCapacity: 8 }, input_n3: { queueCapacity: 8 } },
     outputs: { output_s1: { outflowPerMinute: 18 }, output_s2: { outflowPerMinute: 18 }, output_s3: { outflowPerMinute: 18 } },
   },
@@ -68,7 +68,7 @@ export const META = {
     gridlock: { fullSeconds: 9 },
     incidents: { duration: 15 },
     economy: { startCash: 260 },
-    interventions: { tow: { cost: 130, costStep: 65 } },
+    interventions: { tow: { cost: 130, costStep: 65 }, crew: { cost: 195, costStep: 65 } },
     inputs: { input_w1: { queueCapacity: 12 }, input_w2: { queueCapacity: 12 }, input_n1: { queueCapacity: 8 }, input_n2: { queueCapacity: 8 }, input_n3: { queueCapacity: 8 } },
     outputs: { output_s1: { outflowPerMinute: 18 }, output_s2: { outflowPerMinute: 18 }, output_s3: { outflowPerMinute: 18 } },
   },
@@ -82,7 +82,7 @@ export const META = {
     gridlock: { fullSeconds: 8 },
     incidents: { duration: 16 },
     economy: { startCash: 520 },
-    interventions: { tow: { cost: 260, costStep: 130 } },
+    interventions: { tow: { cost: 260, costStep: 130 }, crew: { cost: 390, costStep: 130 } },
   },
   network_03: {
     name: "Connected Junctions",
@@ -94,7 +94,7 @@ export const META = {
     gridlock: { fullSeconds: 8 },
     incidents: { duration: 16 },
     economy: { startCash: 600 },
-    interventions: { tow: { cost: 300, costStep: 150 } },
+    interventions: { tow: { cost: 300, costStep: 150 }, crew: { cost: 450, costStep: 150 } },
   },
   network_02: {
     name: "City Grid",
@@ -106,7 +106,7 @@ export const META = {
     gridlock: { fullSeconds: 8 },
     incidents: { duration: 16 },
     economy: { startCash: 1050 },
-    interventions: { tow: { cost: 530, costStep: 260 } },
+    interventions: { tow: { cost: 530, costStep: 260 }, crew: { cost: 800, costStep: 260 } },
   },
 };
 

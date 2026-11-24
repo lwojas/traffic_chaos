@@ -9,6 +9,9 @@ import { TrafficEvents } from "../TrafficEvents.js";
 import { UI, Theme, world } from "../ui/theme.js";
 import { toCss } from "../ui/themes.js";
 
+const ROADWORKS_YELLOW = 0xffc400; // fixed across themes: roadworks signage is recognisable by its stripes, not the theme
+const ROADWORKS_DARK = 0x262626;
+const ROADWORKS_CONE = 0xff6a1a;
 const LANE_HALF = 10; // lanes are 20px apart, so a stop line spans exactly its own lane
 
 const _p = { x: 0, y: 0, angle: 0 };
@@ -86,6 +89,7 @@ export class TrafficPresentation {
     });
 
     this.towDelay = session.sim.interventions.tow?.delay ?? 3;
+    this.crewDelay = session.sim.interventions.crew?.delay ?? 4;
 
     this.debugSystem = new DebugSystem({ testSprite: false });
     this.debugView = new TrafficDebugView(session, this.debugSystem, debugFlags, camera);
@@ -316,6 +320,23 @@ export class TrafficPresentation {
     }
   }
 
+  // Roadworks barrier: alternating yellow / black bars across the lane, a cone at each end.
+  barrier(g, lane, s) {
+    const n = 4;
+    const w = (2 * LANE_HALF) / n;
+    for (let i = 0; i < n; i++) {
+      g.lineStyle(7, i % 2 ? ROADWORKS_DARK : ROADWORKS_YELLOW, 1);
+      this.span(g, lane, s, -LANE_HALF + i * w, -LANE_HALF + (i + 1) * w);
+    }
+    g.lineStyle(0);
+    g.beginFill(ROADWORKS_CONE, 1);
+    for (const side of [-LANE_HALF, LANE_HALF]) {
+      pointAt(lane.path, s, _p);
+      g.drawCircle(_p.x - Math.sin(_p.angle) * side, _p.y + Math.cos(_p.angle) * side, 3.5);
+    }
+    g.endFill();
+  }
+
   // Active obstacles: a pulsing hazard bar across every blocked lane or movement,
   // and a ring around each disabled vehicle. Few of these exist at once.
   syncObstacles() {
@@ -327,6 +348,19 @@ export class TrafficPresentation {
     for (const e of obstacles) {
       const o = e.components.ObstacleComponent;
       if (!o.active) continue;
+      if (o.kind === "roadworks") {
+        // Roadworks (a burst pipe): a still striped barrier with a cone at each end. Nothing pulses and there is no ring, so it never reads as a crash
+        for (const b of o.blocks) {
+          const lane = b.lane.components.LaneComponent;
+          this.barrier(g, lane, b.rear);
+          if (o.towed) {
+            // Road crew on its way: a yellow bar over the barrier that shrinks as the works clear
+            g.lineStyle(4, world().tow, 1);
+            this.span(g, lane, b.rear - 8, -LANE_HALF, -LANE_HALF + 2 * LANE_HALF * Math.min(1, o.remaining / this.crewDelay));
+          }
+        }
+        continue;
+      }
       g.lineStyle(6, world().hazard, pulse);
       for (const b of o.blocks) this.line(g, b.lane.components.LaneComponent, b.rear, 11);
       g.lineStyle(2, o.towed ? world().tow : world().hazard, pulse);

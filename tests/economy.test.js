@@ -235,6 +235,30 @@ test("the tow truck costs funds, clears the crash early and then has to recover"
   assert.ok(d.cooldownLeft > 0 && !d.ready);
 });
 
+test("the road crew fixes roadworks quickly for a price, and the tow truck and crew each handle only their own kind", () => {
+  const level = noIncome(firstJunction);
+  level.obstacles = [{ id: "works", kind: "roadworks", at: 0, duration: 600, blockedLanes: ["lane_s_out"] }];
+  const s = quietSession(level);
+  const cfg = gameConfig.simulation.interventions.crew;
+  s.stats.cash = cfg.cost + 10;
+  secs(s, 1);
+  assert.equal(s.interventions.refusal("tow", "works"), "the tow truck only clears crashes");
+  assert.equal(s.interventions.refusal("crew", "works"), null);
+  const before = s.stats.cash;
+  s.intervene("crew", "works");
+  s.step(1);
+  assert.equal(s.stats.cash, before - cfg.cost);
+  assert.ok(runUntil(s, () => s.interventions.obstacleHelper.entities.length === 0, cfg.delay + 2), "fixed within the crew delay, not the 600 s timer");
+  assert.ok(s.interventions.describe("crew").cost > cfg.cost, "the next crew costs more");
+  assert.equal(s.interventions.describe("tow").uses, 0, "the tow truck is unaffected");
+});
+
+test("the road crew refuses crashes", () => {
+  const s = crash();
+  s.stats.cash = 1000;
+  assert.equal(s.interventions.refusal("crew", incident(s).id), "the road crew only fixes roadworks");
+});
+
 test("the tow truck is refused without funds, twice on one crash, or without a crash", () => {
   const s = crash();
   const o = incident(s);

@@ -69,6 +69,7 @@ export class HudReadModel {
       multiplier: this.readMultiplier(),
       congestion: this.readCongestion(streams),
       tow: s.interventions.describe("tow"),
+      crew: s.interventions.describe("crew"),
       gates,
       incidents: this.readIncidents(),
       result: sim.status === "running" ? null : this.session.summary(),
@@ -125,7 +126,8 @@ export class HudReadModel {
         x = _p.x;
         y = _p.y;
       } else continue;
-      out.push({ id: o.levelId, kind: o.kind, x, y, remaining: Math.max(0, o.remaining), towed: o.towed, blocked: o.blocks.length, towRefusal: this.session.interventions.refusal("tow", o.levelId) });
+      const fixer = o.kind === "collision" ? "tow" : "crew"; // crashes need the tow truck, roadworks the road crew
+      out.push({ id: o.levelId, kind: o.kind, x, y, remaining: Math.max(0, o.remaining), towed: o.towed, blocked: o.blocks.length, fix: fixer, fixRefusal: this.session.interventions.refusal(fixer, o.levelId) });
     }
     return out;
   }

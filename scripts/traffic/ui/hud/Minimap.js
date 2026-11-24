@@ -216,8 +216,14 @@ export class Minimap {
       }
       // Incidents: a pulsing cross with a ring, always on top
       for (const i of m.incidents) {
-        this.animating = true;
         tf.worldToMap(i.x, i.y, _p);
+        if (i.kind !== "collision") {
+          // Roadworks: a still amber bar, no pulse, so it is not mistaken for a crash
+          c.fillStyle = "#ffc400";
+          c.fillRect(_p.x - 5, _p.y - 2, 10, 4);
+          continue;
+        }
+        this.animating = true;
         const k = 0.5 + 0.5 * Math.sin(time * 6);
         c.strokeStyle = c.shadowColor = t.incident;
         c.globalAlpha = 1 - k * 0.6;

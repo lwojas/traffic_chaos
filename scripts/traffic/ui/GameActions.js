@@ -77,6 +77,12 @@ export class GameActions {
     if (s && !s.gameOver) s.intervene("tow", obstacleId);
   }
 
+  // The road crew fixes roadworks (the tow truck clears crashes).
+  crew(obstacleId) {
+    const s = this.session;
+    if (s && !s.gameOver) s.intervene("crew", obstacleId);
+  }
+
   toggleDebug() {
     this.debug.toggle();
   }

@@ -43,7 +43,7 @@ export class SettingsMenu {
     this.devBox.addEventListener("change", () => actions.debug.set(this.devBox.checked));
     dev.append(this.devBox, el("span", "", "Developer mode (D)"));
     this.root.append(dev);
-    this.root.append(el("div", "hud-menu-note", "Space pause · Q/W/E speed · T tow · R restart · drag or arrows to scroll"));
+    this.root.append(el("div", "hud-menu-note", "Space pause · Q/W/E speed · T tow / crew · R restart · drag or arrows to scroll"));
 
     parent.append(this.root);
     this.onDocDown = (e) => {

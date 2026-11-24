@@ -750,6 +750,10 @@
     "tow": {
       "cost": 260,
       "costStep": 130
+    },
+    "crew": {
+      "cost": 390,
+      "costStep": 130
     }
   }
 }

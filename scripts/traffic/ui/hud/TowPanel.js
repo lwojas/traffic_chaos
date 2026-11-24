@@ -1,7 +1,8 @@
 import { el, Cell } from "../dom.js";
 import { icon } from "../icons.js";
 
-// Incidents card (only while a crash is active) with the tow truck: one button per active incident, with its price. Spending is a
+// Incidents card (only while a crash or roadworks is active): one button per active incident, with its price. Crashes get the tow
+// truck, roadworks the road crew. Spending is a
 // decision, so every button shows what it costs and why it may be unavailable.
 // Clicking calls actions.tow(id); `T` tows the incident that blocks the most.
 export class TowPanel {
@@ -27,7 +28,14 @@ export class TowPanel {
     const list = m.incidents;
     this.root.hidden = list.length === 0;
     const tow = m.tow;
-    this.head.set(`${list.length} INCIDENT${list.length === 1 ? "" : "S"} · ${tow.ready ? `TOW $${tow.cost}` : `TOW BACK IN ${Math.ceil(tow.cooldownLeft)}s`}`);
+    const crashes = list.filter((i) => i.kind === "collision").length;
+    const works = list.length - crashes;
+    const crew = m.crew;
+    const price = (d, name) => (d.ready ? `${name} $${d.cost}` : `${name} BACK IN ${Math.ceil(d.cooldownLeft)}s`);
+    const parts = [];
+    if (crashes > 0) parts.push(`${crashes} CRASH${crashes === 1 ? "" : "ES"} · ${price(tow, "TOW")}`);
+    if (works > 0) parts.push(`${works} ROADWORKS · ${price(crew, "CREW")}`);
+    this.head.set(parts.join(" · "));
     const seen = new Set();
     for (const i of list) {
       seen.add(i.id);
@@ -35,11 +43,11 @@ export class TowPanel {
       if (!r) {
         const row = el("div", "hud-tow-row");
         const look = el("button", "hud-button", "Look");
-        look.title = "Move the camera to this crash";
+        look.title = "Move the camera here";
         look.addEventListener("click", () => this.camera.glideTo(r.x, r.y));
         const text = el("span", "hud-tow-text");
         const button = el("button", "hud-button hud-tow-go");
-        button.addEventListener("click", () => this.actions.tow(i.id));
+        button.addEventListener("click", () => this.actions[i.fix](i.id)); // actions.tow for crashes, actions.crew for roadworks
         row.append(look, text, button);
         this.list.append(row);
         r = { row, button, text: new Cell(text), label: new Cell(button), x: 0, y: 0 };
@@ -47,10 +55,12 @@ export class TowPanel {
       }
       r.x = i.x;
       r.y = i.y;
-      r.text.set(i.towed ? "tow arriving…" : `clears in ${Math.ceil(i.remaining)}s`);
-      r.label.set(i.towed ? "Towing" : `Tow $${tow.cost}`);
-      r.button.disabled = !!i.towRefusal;
-      r.button.title = i.towRefusal ?? `Spend $${tow.cost} to clear this crash in ${tow.delay}s`;
+      const crash = i.kind === "collision";
+      const d = crash ? tow : crew;
+      r.text.set(i.towed ? (crash ? "tow arriving…" : "crew arriving…") : crash ? `clears in ${Math.ceil(i.remaining)}s` : `roadworks, ends in ${Math.ceil(i.remaining)}s`);
+      r.label.set(i.towed ? (crash ? "Towing" : "Fixing") : `${crash ? "Tow" : "Fix"} $${d.cost}`);
+      r.button.disabled = !!i.fixRefusal;
+      r.button.title = i.fixRefusal ?? (crash ? `Spend $${d.cost} to clear this crash in ${d.delay}s` : `Spend $${d.cost} to send the road crew: fixed in ${d.delay}s`);
     }
     for (const [id, r] of this.rows) {
       if (seen.has(id)) continue;
@@ -59,11 +69,11 @@ export class TowPanel {
     }
   }
 
-  // Tow the incident that is blocking the most of the network (hotkey T)
+  // Send the tow truck or road crew to the incident that is blocking the most of the network (hotkey T)
   towWorst() {
-    const list = this.model?.incidents.filter((i) => !i.towRefusal) ?? [];
+    const list = this.model?.incidents.filter((i) => !i.fixRefusal) ?? [];
     if (list.length === 0) return;
     list.sort((a, b) => b.blocked - a.blocked || b.remaining - a.remaining);
-    this.actions.tow(list[0].id);
+    this.actions[list[0].fix](list[0].id);
   }
 }
